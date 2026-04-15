@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "elliott-miner-engine"
+version = "0.1.0"
+description = "Practical Elliott Wave engine inspired by public Robert Miner / Dynamic Traders material"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "pandas>=2.2.0",
+  "numpy>=1.26.0",
+  "matplotlib>=3.8.0",
+  "yfinance>=0.2.54",
+  "lxml>=5.0.0",
+  "html5lib>=1.1",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
