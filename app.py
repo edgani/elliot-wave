@@ -27,8 +27,8 @@ def fetch_data(symbol: str, interval: str, period: str) -> pd.DataFrame:
 
 
 @st.cache_data(show_spinner=False)
-def load_market_universe(market: str, us_common_only: bool) -> dict:
-    result = load_market_universe_safe(market, us_common_only=us_common_only)
+def load_market_universe(market: str, us_common_only: bool, allow_unverified_third_party: bool) -> dict:
+    result = load_market_universe_safe(market, us_common_only=us_common_only, allow_unverified_third_party=allow_unverified_third_party)
     return {
         'market': result.market,
         'df': result.df,
@@ -112,8 +112,9 @@ with st.sidebar:
     st.header('Controls')
     market = st.selectbox('Market', ['ihsg', 'us_stocks', 'forex', 'commodities', 'crypto'], index=0)
     us_common_only = st.checkbox('US: common-only filter', value=False, help='Turn on to reduce many special share classes, warrants, and rights lines.') if market == 'us_stocks' else False
+    allow_unverified_third_party = st.checkbox('IHSG: allow third-party fallback list', value=False, help='Off by default. Turn on only if you accept a potentially stale third-party mirror when IDX blocks automated requests.') if market == 'ihsg' else False
 
-    universe_payload = load_market_universe(market, us_common_only)
+    universe_payload = load_market_universe(market, us_common_only, allow_unverified_third_party)
     universe = universe_payload['df']
 
     st.caption(f"Universe source: {universe_payload['source']}")
@@ -194,6 +195,28 @@ if run:
             results.append(engine.analyze(df, symbol=symbol, market=market, interval=interval))
 
     mtf = reconcile_results(results)
+
+    freshness_rows = []
+    now_utc = pd.Timestamp.utcnow()
+    for interval in intervals:
+        df = data_map[interval]
+        last_ts = pd.Timestamp(df.index.max()) if not df.empty else pd.NaT
+        first_ts = pd.Timestamp(df.index.min()) if not df.empty else pd.NaT
+        stale_days = None
+        if pd.notna(last_ts):
+            ts_cmp = last_ts.tz_convert('UTC') if getattr(last_ts, 'tzinfo', None) is not None else last_ts.tz_localize('UTC')
+            stale_days = round((now_utc - ts_cmp).total_seconds() / 86400, 2)
+        freshness_rows.append({
+            'interval': interval,
+            'rows': len(df),
+            'start': first_ts,
+            'last_bar': last_ts,
+            'stale_days_vs_now_utc': stale_days,
+            'last_close': None if df.empty else float(df['Close'].iloc[-1]),
+        })
+
+    st.subheader('Fetched data audit')
+    st.dataframe(pd.DataFrame(freshness_rows), use_container_width=True)
 
     c1, c2, c3, c4 = st.columns(4)
     c1.metric('Consensus direction', mtf.consensus_direction or 'n/a')
@@ -282,4 +305,4 @@ if run:
                 st.subheader('Alternate counts')
                 st.dataframe(pd.DataFrame(alt_rows), use_container_width=True)
 else:
-    st.info('Set market, symbol, intervals, and parameters, then click Run analysis.')
+    st.info('Set market, symbol, intervals, and parameters, then click Run analysis. Always check the fetched data audit table first so you can see the actual first bar and latest bar returned by the provider.')

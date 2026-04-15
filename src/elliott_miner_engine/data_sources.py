@@ -235,7 +235,7 @@ def _safe_universe(df: pd.DataFrame, cols: List[str]) -> pd.DataFrame:
     return out.reset_index(drop=True)
 
 
-def load_market_universe_safe(market: str, *, us_common_only: bool = False) -> UniverseLoadResult:
+def load_market_universe_safe(market: str, *, us_common_only: bool = False, allow_unverified_third_party: bool = False) -> UniverseLoadResult:
     notes: List[str] = []
     market = market.strip().lower()
 
@@ -246,15 +246,19 @@ def load_market_universe_safe(market: str, *, us_common_only: bool = False) -> U
             return UniverseLoadResult(market, df, 'IDX official stock list', True, True, notes)
         except Exception as e:
             notes.append(f'Official IDX live load failed: {e}')
-        try:
-            df = _safe_universe(ExchangeUniverseLoader.load_idx_github_snapshot(), ['symbol', 'name'])
-            notes.append('Fell back to GitHub mirror sector CSVs because IDX may block bots on hosted environments.')
-            return UniverseLoadResult(market, df, 'GitHub mirror snapshot', True, False, notes)
-        except Exception as e:
-            notes.append(f'GitHub fallback failed: {e}')
+        if allow_unverified_third_party:
+            try:
+                df = _safe_universe(ExchangeUniverseLoader.load_idx_github_snapshot(), ['symbol', 'name'])
+                notes.append('Loaded third-party GitHub mirror snapshot because official IDX blocked the request.')
+                notes.append('Treat this as convenience only, not authoritative. It may lag current listings or names.')
+                return UniverseLoadResult(market, df, 'third-party GitHub mirror snapshot', True, False, notes)
+            except Exception as e:
+                notes.append(f'Third-party GitHub fallback failed: {e}')
+        else:
+            notes.append('Third-party IDX fallback is disabled by default to avoid silently showing stale listings.')
         df = _safe_universe(ExchangeUniverseLoader._read_local_csv('ihsg_fallback.csv'), ['symbol', 'name'])
-        notes.append('Using bundled local fallback sample only. Manual symbol entry is still supported.')
-        return UniverseLoadResult(market, df, 'bundled local fallback sample', False, False, notes)
+        notes.append('Using bundled local fallback watchlist only. This is not the full IDX universe. Manual symbol entry is still supported.')
+        return UniverseLoadResult(market, df, 'bundled local fallback watchlist', False, False, notes)
 
     if market == 'us_stocks':
         try:
