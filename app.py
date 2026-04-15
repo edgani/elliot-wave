@@ -13,7 +13,7 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from elliott_miner_engine import ElliottWaveEngine, MarketScanner, YahooMarketData, reconcile_results
+from elliott_miner_engine import ElliottWaveEngine, MarketScanner, YahooMarketData, reconcile_results, build_degree_hierarchy, hierarchy_frame
 from elliott_miner_engine.data_sources import format_symbol_for_market, load_market_universe_safe
 
 
@@ -216,29 +216,74 @@ def _project_right_x(index: pd.DatetimeIndex, interval: str, steps: int = 12):
 
 
 
-def _label_points(candidate):
+def _label_points(candidate, degree: str = "minor"):
     if candidate is None:
         return []
     idxs = candidate.pivot_indices
     prices = candidate.pivot_prices
     out = []
     if candidate.pattern_type in {"impulse", "ending_diagonal"} and len(idxs) >= 6:
-        labels = ["1", "2", "3", "4", "5"]
+        base = ["1", "2", "3", "4", "5"]
+        if degree == "primary":
+            labels = [f"({x})" for x in base]
+            color = "#2d66ff"
+        elif degree == "intermediate":
+            labels = base
+            color = "#111111"
+        else:
+            labels = ["i", "ii", "iii", "iv", "v"]
+            color = "#0b8f3a"
         for idx, price, label in zip(idxs[1:6], prices[1:6], labels):
-            out.append((idx, price, label, "#2d66ff"))
+            out.append((idx, price, label, color))
     elif candidate.pattern_type in {"zigzag", "flat"} and len(idxs) >= 4:
-        labels = ["A", "B", "C"]
+        base = ["A", "B", "C"]
+        if degree == "primary":
+            labels = [f"({x})" for x in base]
+            color = "#2d66ff"
+        elif degree == "intermediate":
+            labels = base
+            color = "#ff3b7f"
+        else:
+            labels = ["a", "b", "c"]
+            color = "#ff3b7f"
         for idx, price, label in zip(idxs[1:4], prices[1:4], labels):
-            out.append((idx, price, label, "#ff3b7f"))
+            out.append((idx, price, label, color))
     elif candidate.pattern_type == "triangle" and len(idxs) >= 6:
-        labels = ["A", "B", "C", "D", "E"]
+        base = ["A", "B", "C", "D", "E"]
+        if degree == "primary":
+            labels = [f"({x})" for x in base]
+            color = "#2d66ff"
+        elif degree == "intermediate":
+            labels = base
+            color = "#ff3b7f"
+        else:
+            labels = ["a", "b", "c", "d", "e"]
+            color = "#ff3b7f"
         for idx, price, label in zip(idxs[1:6], prices[1:6], labels):
-            out.append((idx, price, label, "#ff3b7f"))
+            out.append((idx, price, label, color))
     return out
 
 
+_DEGREE_STYLE = {
+    "primary": {"color": "#2d66ff", "size": 20, "yshift": 20},
+    "intermediate": {"color": "#111111", "size": 16, "yshift": 6},
+    "minor": {"color": "#0b8f3a", "size": 13, "yshift": -10},
+    "minute": {"color": "#0b8f3a", "size": 11, "yshift": -18},
+    "cycle": {"color": "#2d66ff", "size": 22, "yshift": 26},
+}
 
-def plot_reference_chart(df: pd.DataFrame, result, interval: str, lookback_bars: int = 250):
+
+def _candidate_time_window(candidate):
+    if candidate is None or not candidate.fib_time_targets:
+        return None, None
+    top = sorted(candidate.fib_time_targets, key=lambda t: (-t.weight, t.projected_index))[:3]
+    pts = [pd.Timestamp(t.projected_timestamp) for t in top if t.projected_timestamp is not None]
+    if not pts:
+        return None, None
+    return min(pts), max(pts)
+
+
+def plot_reference_chart(df: pd.DataFrame, result, interval: str, lookback_bars: int = 250, degree_summary=None, degree_results: dict | None = None):
     candidate = result.best_candidate
     view = df.tail(lookback_bars).copy()
     fig = go.Figure()
@@ -250,8 +295,8 @@ def plot_reference_chart(df: pd.DataFrame, result, interval: str, lookback_bars:
             low=view["Low"],
             close=view["Close"],
             name="Price",
-            increasing_line_color="#444444",
-            decreasing_line_color="#444444",
+            increasing_line_color="#6b6b6b",
+            decreasing_line_color="#6b6b6b",
             increasing_fillcolor="rgba(0,0,0,0)",
             decreasing_fillcolor="rgba(0,0,0,0)",
             whiskerwidth=0.2,
@@ -261,9 +306,8 @@ def plot_reference_chart(df: pd.DataFrame, result, interval: str, lookback_bars:
 
     last_close = float(view["Close"].iloc[-1])
     x0 = view.index[0]
-    x1 = _project_right_x(view.index, interval, steps=18)
-
-    fig.add_hline(y=last_close, line_width=1, line_dash="dot", line_color="#666666")
+    x1 = _project_right_x(view.index, interval, steps=22)
+    fig.add_hline(y=last_close, line_width=1, line_dash="dot", line_color="#7d7d7d")
 
     if candidate is not None:
         vis_x = []
@@ -280,83 +324,96 @@ def plot_reference_chart(df: pd.DataFrame, result, interval: str, lookback_bars:
                     x=vis_x,
                     y=vis_y,
                     mode="lines",
-                    line=dict(color="#4a4a4a", width=1.0),
+                    line=dict(color="#7d7d7d", width=1.0),
                     showlegend=False,
                     hoverinfo="skip",
                 )
             )
-        for idx, price, label, color in _label_points(candidate):
-            if 0 <= idx < len(df):
-                ts = df.index[idx]
+
+    if degree_summary is not None and degree_results:
+        for dv in degree_summary.degree_views:
+            src_result = degree_results.get(dv.interval)
+            src_candidate = None if src_result is None else src_result.best_candidate
+            if src_candidate is None:
+                continue
+            style = _DEGREE_STYLE.get(dv.degree, _DEGREE_STYLE["minor"])
+            label_points = _label_points(src_candidate, degree=dv.degree)
+            pivot_ts = list(src_candidate.pivot_timestamps[1 : 1 + len(label_points)])
+            for (idx, price, label, _), ts in zip(label_points, pivot_ts):
+                ts = pd.Timestamp(ts)
                 if ts >= x0:
                     fig.add_annotation(
                         x=ts,
                         y=price,
                         text=label,
-                        font=dict(color=color, size=18),
+                        font=dict(color=style["color"], size=style["size"]),
                         xanchor="center",
                         yanchor="bottom",
+                        yshift=style["yshift"],
                         showarrow=False,
                         bgcolor="rgba(255,255,255,0)",
                     )
 
-        target_rows = _target_rows(candidate)
-        core_targets = target_rows[target_rows["kind"].isin(["target", "zone", "risk", "price"])].copy()
-        if not core_targets.empty:
-            if candidate.direction == "bull":
-                core_targets["priority"] = core_targets["value"].apply(lambda x: abs(float(x) - last_close))
-            else:
-                core_targets["priority"] = core_targets["value"].apply(lambda x: abs(float(x) - last_close))
-            core_targets = core_targets.sort_values(["kind", "weight", "priority"], ascending=[True, False, True]).head(4)
-            for _, row in core_targets.iterrows():
-                value = float(row["value"])
-                name = str(row["name"])
-                color = "#2d66ff" if value >= last_close else "#ff3b7f"
-                if name == "Invalidation":
-                    color = "#222222"
-                fig.add_shape(
-                    type="line",
-                    x0=view.index[-1],
-                    x1=x1,
-                    y0=value,
-                    y1=value,
-                    line=dict(color=color, width=1.4, dash="dot"),
-                )
-                fig.add_annotation(
-                    x=x1,
-                    y=value,
-                    text=f"({value:,.0f})",
-                    font=dict(color=color, size=16),
-                    xanchor="left",
-                    yanchor="middle",
-                    showarrow=False,
-                )
+    target_rows = _target_rows(candidate)
+    core_targets = target_rows[target_rows["kind"].isin(["target", "zone", "risk", "price"])].copy()
+    if not core_targets.empty:
+        core_targets["priority"] = core_targets["value"].apply(lambda x: abs(float(x) - last_close))
+        core_targets = core_targets.sort_values(["kind", "weight", "priority"], ascending=[True, False, True]).head(5)
+        for _, row in core_targets.iterrows():
+            value = float(row["value"])
+            name = str(row["name"])
+            color = "#2d66ff" if value >= last_close else "#ff3b7f"
+            if name == "Invalidation":
+                color = "#111111"
+            fig.add_shape(
+                type="line",
+                x0=view.index[-1],
+                x1=x1,
+                y0=value,
+                y1=value,
+                line=dict(color=color, width=1.4, dash="dot"),
+            )
+            fig.add_annotation(
+                x=x1,
+                y=value,
+                text=f"({value:,.0f})",
+                font=dict(color=color, size=16),
+                xanchor="left",
+                yanchor="middle",
+                showarrow=False,
+            )
 
+    if candidate is not None:
+        tws, twe = _candidate_time_window(candidate)
+        if tws is not None and twe is not None:
+            fig.add_vrect(x0=tws, x1=twe, fillcolor="#bdbdbd", opacity=0.08, line_width=0)
         if candidate.invalidation is not None:
             fig.add_annotation(
                 x=x1,
                 y=float(candidate.invalidation),
                 text=f"invalid {float(candidate.invalidation):,.0f}",
-                font=dict(color="#222222", size=12),
+                font=dict(color="#111111", size=12),
                 xanchor="left",
                 yanchor="bottom",
                 showarrow=False,
             )
 
+    title = f"{result.symbol} | {interval}"
+    if degree_summary is not None:
+        title += f" | {degree_summary.state}"
     fig.update_layout(
-        title=f"{result.symbol} | {interval}",
-        height=640,
-        margin=dict(l=10, r=60, t=30, b=10),
-        paper_bgcolor="#ececec",
-        plot_bgcolor="#ececec",
+        title=title,
+        height=680,
+        margin=dict(l=10, r=120, t=30, b=10),
+        paper_bgcolor="#e9e9e9",
+        plot_bgcolor="#e9e9e9",
         xaxis_rangeslider_visible=False,
         showlegend=False,
         font=dict(color="#222222"),
     )
-    fig.update_xaxes(showgrid=False, zeroline=False, showline=False, ticks="")
+    fig.update_xaxes(showgrid=False, zeroline=False, showline=False, ticks="", range=[view.index[0], x1])
     fig.update_yaxes(showgrid=False, zeroline=False, showline=False, side="right")
     return fig
-
 
 
 def _build_engine(min_reversal_pct, atr_mult, max_pivots, top_n, candidate_lookback_pivots):
@@ -371,7 +428,7 @@ def _build_engine(min_reversal_pct, atr_mult, max_pivots, top_n, candidate_lookb
 
 st.title("Elliott Wave Miner Engine")
 st.caption(
-    "Scanner + single-chart workflow. Visual is simplified toward analyst-style reference charts: clean candles, wave labels, invalidation, and target lines."
+    "Scanner + single-chart workflow with hierarchical multi-degree counting. Visual leans closer to analyst-style Elliott charts: clean candles, degree labels, invalidation, and target lines."
 )
 
 with st.sidebar:
@@ -490,16 +547,24 @@ if run:
             st.stop()
 
         mtf = reconcile_results(results)
+        degree_summary = build_degree_hierarchy(results)
+        degree_results = {r.interval: r for r in results}
+
         c1, c2, c3, c4 = st.columns(4)
         c1.metric("Consensus direction", mtf.consensus_direction or "n/a")
         c2.metric("Consensus pattern", mtf.consensus_pattern or "n/a")
         c3.metric("Alignment score", f"{mtf.alignment_score:.2f}")
         c4.metric("State", mtf.state)
 
-        c5, c6, c7 = st.columns(3)
-        c5.metric("Consensus invalidation", "-" if mtf.invalidation is None else f"{mtf.invalidation:,.4f}")
-        c6.metric("Consensus target", "-" if mtf.target_price is None else f"{mtf.target_price:,.4f}")
-        c7.metric(
+        c5, c6, c7, c8 = st.columns(4)
+        c5.metric("Hierarchy state", degree_summary.state)
+        c6.metric("Hierarchy agreement", f"{degree_summary.agreement_score:.2f}")
+        c7.metric("Inherited alignment", f"{degree_summary.inherited_alignment_score:.2f}")
+        c8.metric("Consensus invalidation", "-" if mtf.invalidation is None else f"{mtf.invalidation:,.4f}")
+
+        c9, c10 = st.columns(2)
+        c9.metric("Consensus target", "-" if mtf.target_price is None else f"{mtf.target_price:,.4f}")
+        c10.metric(
             "Target zone",
             "-"
             if mtf.target_zone_low is None or mtf.target_zone_high is None
@@ -508,6 +573,11 @@ if run:
 
         if mtf.target_time_window_start is not None or mtf.target_time_window_end is not None:
             st.info(f"Consensus time window: {mtf.target_time_window_start} → {mtf.target_time_window_end}")
+
+        st.subheader("Hierarchical degree summary")
+        st.dataframe(hierarchy_frame(degree_summary), use_container_width=True, hide_index=True)
+        for note in degree_summary.notes:
+            st.caption(note)
 
         st.subheader("Timeframe summary")
         tf_rows = []
@@ -529,13 +599,20 @@ if run:
             )
         st.dataframe(pd.DataFrame(tf_rows), use_container_width=True, hide_index=True)
 
+        base_interval = "1d" if "1d" in data_map else results[0].interval
+        st.subheader(f"Reference chart: {base_interval} with multi-degree overlay")
+        st.plotly_chart(
+            plot_reference_chart(data_map[base_interval], degree_results[base_interval], base_interval, lookback_bars=lookback_bars, degree_summary=degree_summary, degree_results=degree_results),
+            use_container_width=True,
+        )
+
         tabs = st.tabs([r.interval for r in results])
         for tab, result in zip(tabs, results):
             with tab:
                 candidate = result.best_candidate
                 df = data_map[result.interval]
                 st.plotly_chart(
-                    plot_reference_chart(df, result, result.interval, lookback_bars=lookback_bars),
+                    plot_reference_chart(df, result, result.interval, lookback_bars=lookback_bars, degree_summary=degree_summary, degree_results=degree_results),
                     use_container_width=True,
                 )
                 st.caption("Fetched data audit")
