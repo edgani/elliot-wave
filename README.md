@@ -59,3 +59,16 @@ The new reconciliation layer combines `1d`, `1wk`, and `1mo` outputs into a weig
 - consensus time window
 
 This does **not** pretend there is one perfect count. It explicitly measures whether the lower and higher timeframes agree enough to trust the setup.
+
+
+## Universe/data source behavior in the Streamlit app
+- The app no longer crashes if a live universe source fails.
+- IHSG tries the official IDX stock-list page first. If IDX blocks the request, it falls back to a GitHub mirror snapshot, then finally to a bundled local sample.
+- US stocks try the live official Nasdaq Trader symbol directories first, then fall back to a bundled local sample.
+- Crypto tries the live CoinGecko coin list for discovery, but analysis still uses the symbol you type and Yahoo-compatible symbols work best in the current build.
+- Forex and commodities are curated Yahoo-compatible lists, not complete global master universes.
+
+## Honesty on completeness
+- US can be near-full when the live Nasdaq Trader directory is reachable.
+- IHSG can be near-full only when the official IDX page is reachable or the mirror snapshot is available; otherwise the bundled local fallback is only a sample.
+- Crypto discovery can be very broad through CoinGecko, but price-history execution in this build is still most stable with Yahoo-style symbols like `BTC-USD`.

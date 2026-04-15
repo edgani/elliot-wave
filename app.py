@@ -14,7 +14,7 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from elliott_miner_engine import ElliottWaveEngine, YahooMarketData, reconcile_results
-from elliott_miner_engine.data_sources import ExchangeUniverseLoader, format_symbol_for_market
+from elliott_miner_engine.data_sources import format_symbol_for_market, load_market_universe_safe
 
 
 st.set_page_config(page_title="Elliott Wave Miner Engine", layout="wide")
@@ -27,23 +27,16 @@ def fetch_data(symbol: str, interval: str, period: str) -> pd.DataFrame:
 
 
 @st.cache_data(show_spinner=False)
-def load_market_universe(market: str) -> pd.DataFrame:
-    if market == 'ihsg':
-        return ExchangeUniverseLoader.load_idx()[['symbol', 'name']]
-    if market == 'us_stocks':
-        return ExchangeUniverseLoader.load_us_equities(common_only=True)[['symbol', 'name']]
-    if market == 'forex':
-        return ExchangeUniverseLoader.load_forex_default()[['symbol', 'name']]
-    if market == 'commodities':
-        return ExchangeUniverseLoader.load_commodities_default()[['symbol', 'name']]
-    if market == 'crypto':
-        rows = [
-            ('BTC-USD', 'Bitcoin'), ('ETH-USD', 'Ethereum'), ('SOL-USD', 'Solana'), ('XRP-USD', 'XRP'),
-            ('BNB-USD', 'BNB'), ('ADA-USD', 'Cardano'), ('DOGE-USD', 'Dogecoin'), ('TRX-USD', 'Tron'),
-            ('AVAX-USD', 'Avalanche'), ('LINK-USD', 'Chainlink'),
-        ]
-        return pd.DataFrame(rows, columns=['symbol', 'name'])
-    return pd.DataFrame(columns=['symbol', 'name'])
+def load_market_universe(market: str, us_common_only: bool) -> dict:
+    result = load_market_universe_safe(market, us_common_only=us_common_only)
+    return {
+        'market': result.market,
+        'df': result.df,
+        'source': result.source,
+        'is_live': result.is_live,
+        'is_complete': result.is_complete,
+        'notes': result.notes,
+    }
 
 
 def candidate_overview(candidate) -> pd.DataFrame:
@@ -51,17 +44,20 @@ def candidate_overview(candidate) -> pd.DataFrame:
         return pd.DataFrame()
     rows = []
     for w in candidate.wave_duration_projections:
-        rows.append({
-            'wave': w.wave_name,
-            'actual_bars': w.actual_bars,
-            'proj_bars_central': w.projected_bars_central,
-            'proj_bars_low': w.projected_bars_low,
-            'proj_bars_high': w.projected_bars_high,
-            'remaining_bars_central': w.remaining_bars_central,
-            'projected_end_central': w.projected_end_timestamp_central,
-            'fit_score': w.fit_score,
-            'status': w.status,
-        })
+        rows.append(
+            {
+                'wave': w.wave_name,
+                'actual_bars': w.actual_bars,
+                'proj_bars_central': w.projected_bars_central,
+                'proj_bars_low': w.projected_bars_low,
+                'proj_bars_high': w.projected_bars_high,
+                'remaining_bars_central': w.remaining_bars_central,
+                'projected_end_central': w.projected_end_timestamp_central,
+                'fit_score': w.fit_score,
+                'status': w.status,
+                'basis': w.basis,
+            }
+        )
     return pd.DataFrame(rows)
 
 
@@ -99,17 +95,69 @@ def plot_result(df: pd.DataFrame, result, interval: str):
     return fig
 
 
+def _default_symbol(market: str) -> str:
+    return {
+        'ihsg': 'BBCA.JK',
+        'us_stocks': 'AAPL',
+        'forex': 'EURUSD=X',
+        'commodities': 'GC=F',
+        'crypto': 'BTC-USD',
+    }.get(market, '')
+
+
 st.title('Elliott Wave Miner Engine')
-st.caption('Multi-timeframe practical Elliott Wave analysis with price/time targets, invalidation, and duration projections.')
+st.caption('Multi-timeframe practical Elliott Wave analysis with price/time targets, invalidation, duration projections, and safer universe loading.')
 
 with st.sidebar:
     st.header('Controls')
     market = st.selectbox('Market', ['ihsg', 'us_stocks', 'forex', 'commodities', 'crypto'], index=0)
-    universe = load_market_universe(market)
-    symbol_options: List[str] = universe['symbol'].tolist()[:2000] if not universe.empty else []
-    default_symbol = 'BBCA.JK' if market == 'ihsg' else ('AAPL' if market == 'us_stocks' else ('EURUSD=X' if market == 'forex' else ('GC=F' if market == 'commodities' else 'BTC-USD')))
-    selected_symbol = st.selectbox('Symbol from sample universe', options=symbol_options, index=symbol_options.index(default_symbol) if default_symbol in symbol_options else 0) if symbol_options else default_symbol
-    custom_symbol = st.text_input('Or type symbol manually', value=selected_symbol)
+    us_common_only = st.checkbox('US: common-only filter', value=False, help='Turn on to reduce many special share classes, warrants, and rights lines.') if market == 'us_stocks' else False
+
+    universe_payload = load_market_universe(market, us_common_only)
+    universe = universe_payload['df']
+
+    st.caption(f"Universe source: {universe_payload['source']}")
+    source_flags = []
+    source_flags.append('live' if universe_payload['is_live'] else 'fallback')
+    if universe_payload['is_complete'] is True:
+        source_flags.append('full/near-full')
+    elif universe_payload['is_complete'] is False:
+        source_flags.append('partial/curated')
+    st.caption(' | '.join(source_flags))
+
+    if universe_payload['notes']:
+        with st.expander('Universe notes', expanded=False):
+            for note in universe_payload['notes']:
+                st.write(f'- {note}')
+
+    if universe.empty:
+        st.warning('Universe list unavailable. Manual symbol entry still works.')
+        selected_symbol = _default_symbol(market)
+    else:
+        st.caption(f'Universe rows loaded: {len(universe):,}')
+        filter_text = st.text_input('Filter universe list', value='', help='Filter by symbol or company/coin name before picking from the dropdown.')
+        filtered = universe
+        if filter_text.strip():
+            q = filter_text.strip().upper()
+            filtered = universe[
+                universe['symbol'].astype(str).str.upper().str.contains(q, na=False)
+                | universe['name'].astype(str).str.upper().str.contains(q, na=False)
+            ]
+        max_dropdown_rows = st.slider('Max dropdown rows', 50, 1000, 300, 50)
+        filtered = filtered.head(max_dropdown_rows)
+        symbol_options: List[str] = filtered['symbol'].tolist()
+        default_symbol = _default_symbol(market)
+        if default_symbol in symbol_options:
+            selected_index = symbol_options.index(default_symbol)
+        else:
+            selected_index = 0 if symbol_options else None
+        selected_symbol = (
+            st.selectbox('Symbol from loaded universe', options=symbol_options, index=selected_index)
+            if symbol_options
+            else default_symbol
+        )
+
+    custom_symbol = st.text_input('Symbol to analyze', value=selected_symbol, help='Manual input overrides the dropdown. For IHSG, plain BBCA will auto-convert to BBCA.JK.')
     symbol = format_symbol_for_market(custom_symbol or selected_symbol, market)
 
     intervals = st.multiselect('Intervals', ['1d', '1wk', '1mo'], default=['1d', '1wk', '1mo'])
@@ -124,6 +172,9 @@ with st.sidebar:
 if run:
     if not intervals:
         st.error('Pick at least one interval.')
+        st.stop()
+    if not symbol:
+        st.error('Enter a symbol first.')
         st.stop()
 
     engine = ElliottWaveEngine(
@@ -163,20 +214,22 @@ if run:
             st.write(f'- {note}')
         tf_rows = []
         for v in mtf.timeframe_views:
-            tf_rows.append({
-                'interval': v.interval,
-                'weight': v.weight,
-                'direction': v.direction,
-                'pattern': v.pattern_type,
-                'score': v.score,
-                'confidence': v.confidence,
-                'invalidation': v.invalidation,
-                'target_price': v.price_target,
-                'target_zone_low': v.price_zone_low,
-                'target_zone_high': v.price_zone_high,
-                'time_window_start': v.time_window_start,
-                'time_window_end': v.time_window_end,
-            })
+            tf_rows.append(
+                {
+                    'interval': v.interval,
+                    'weight': v.weight,
+                    'direction': v.direction,
+                    'pattern': v.pattern_type,
+                    'score': v.score,
+                    'confidence': v.confidence,
+                    'invalidation': v.invalidation,
+                    'target_price': v.price_target,
+                    'target_zone_low': v.price_zone_low,
+                    'target_zone_high': v.price_zone_high,
+                    'time_window_start': v.time_window_start,
+                    'time_window_end': v.time_window_end,
+                }
+            )
         st.dataframe(pd.DataFrame(tf_rows), use_container_width=True)
 
     tabs = st.tabs(intervals)
@@ -215,14 +268,16 @@ if run:
 
             alt_rows = []
             for alt in result.alternate_candidates:
-                alt_rows.append({
-                    'pattern': alt.pattern_type,
-                    'direction': alt.direction,
-                    'score': alt.score,
-                    'confidence': alt.confidence,
-                    'invalidation': alt.invalidation,
-                    'primary_price_target': alt.meta.get('primary_price_target'),
-                })
+                alt_rows.append(
+                    {
+                        'pattern': alt.pattern_type,
+                        'direction': alt.direction,
+                        'score': alt.score,
+                        'confidence': alt.confidence,
+                        'invalidation': alt.invalidation,
+                        'primary_price_target': alt.meta.get('primary_price_target'),
+                    }
+                )
             if alt_rows:
                 st.subheader('Alternate counts')
                 st.dataframe(pd.DataFrame(alt_rows), use_container_width=True)
