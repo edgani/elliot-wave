@@ -1,40 +1,936 @@
 symbol,name
-AADI.JK,Adaro Andalan Indonesia Tbk
-ADMR.JK,Alamtri Minerals Indonesia Tbk
-ADRO.JK,Alamtri Resources Indonesia Tbk
-AKRA.JK,AKR Corporindo Tbk
-AMMN.JK,Amman Mineral Internasional Tbk
-ANTM.JK,Aneka Tambang Tbk
-ARTO.JK,Bank Jago Tbk
-ASII.JK,Astra International Tbk
-BBCA.JK,Bank Central Asia Tbk
-BBNI.JK,Bank Negara Indonesia (Persero) Tbk
-BBRI.JK,Bank Rakyat Indonesia (Persero) Tbk
-BBTN.JK,Bank Tabungan Negara (Persero) Tbk
-BMRI.JK,Bank Mandiri (Persero) Tbk
-BREN.JK,Barito Renewables Energy Tbk
-BRIS.JK,Bank Syariah Indonesia Tbk
+AADI.JK,Adaro Andalan Indonesia Tbk.
+AALI.JK,Astra Agro Lestari Tbk.
+ABBA.JK,Mahaka Media Tbk.
+ABDA.JK,Asuransi Bina Dana Arta Tbk.
+ABMM.JK,ABM Investama Tbk.
+ACES.JK,Aspirasi Hidup Indonesia Tbk.
+ACRO.JK,Samcro Hyosung Adilestari Tbk.
+ACST.JK,Acset Indonusa Tbk.
+ADCP.JK,Adhi Commuter Properti Tbk.
+ADES.JK,Akasha Wira International Tbk.
+ADHI.JK,Adhi Karya (Persero) Tbk.
+ADMF.JK,Adira Dinamika Multi Finance T
+ADMG.JK,Polychem Indonesia Tbk
+ADMR.JK,Adaro Minerals Indonesia Tbk.
+ADRO.JK,Adaro Energy Indonesia Tbk.
+AEGS.JK,Anugerah Spareparts Sejahtera
+AGAR.JK,Asia Sejahtera Mina Tbk.
+AGII.JK,Samator Indo Gas Tbk.
+AGRO.JK,Bank Raya Indonesia Tbk.
+AGRS.JK,Bank IBK Indonesia Tbk.
+AHAP.JK,Asuransi Harta Aman Pratama Tb
+AIMS.JK,Artha Mahiya Investama Tbk.
+AISA.JK,FKS Food Sejahtera Tbk.
+AKKU.JK,Anugerah Kagum Karya Utama Tbk
+AKPI.JK,Argha Karya Prima Industry Tbk
+AKRA.JK,AKR Corporindo Tbk.
+AKSI.JK,Mineral Sumberdaya Mandiri Tbk
+ALDO.JK,Alkindo Naratama Tbk.
+ALII.JK,Ancara Logistics Indonesia Tbk
+ALKA.JK,Alakasa Industrindo Tbk
+ALMI.JK,Alumindo Light Metal Industry
+ALTO.JK,Tri Banyan Tirta Tbk.
+AMAG.JK,Asuransi Multi Artha Guna Tbk.
+AMAN.JK,Makmur Berkah Amanda Tbk.
+AMAR.JK,Bank Amar Indonesia Tbk.
+AMFG.JK,Asahimas Flat Glass Tbk.
+AMIN.JK,Ateliers Mecaniques D Indonesi
+AMMN.JK,Amman Mineral Internasional Tb
+AMMS.JK,Agung Menjangan Mas Tbk.
+AMOR.JK,Ashmore Asset Management Indon
+AMRT.JK,Sumber Alfaria Trijaya Tbk.
+ANDI.JK,Andira Agro Tbk.
+ANJT.JK,Austindo Nusantara Jaya Tbk.
+ANTM.JK,Aneka Tambang Tbk.
+APEX.JK,Apexindo Pratama Duta Tbk.
+APIC.JK,Pacific Strategic Financial Tb
+APII.JK,Arita Prima Indonesia Tbk.
+APLI.JK,Asiaplast Industries Tbk.
+APLN.JK,Agung Podomoro Land Tbk.
+ARCI.JK,Archi Indonesia Tbk.
+AREA.JK,Dunia Virtual Online Tbk.
+ARGO.JK,Argo Pantes Tbk
+ARII.JK,Atlas Resources Tbk.
+ARKA.JK,Arkha Jayanti Persada Tbk.
+ARKO.JK,Arkora Hydro Tbk.
+ARMY.JK,Armidian Karyatama Tbk.
+ARNA.JK,Arwana Citramulia Tbk.
+ARTA.JK,Arthavest Tbk
+ARTI.JK,Ratu Prabu Energi Tbk
+ARTO.JK,Bank Jago Tbk.
+ASBI.JK,Asuransi Bintang Tbk.
+ASDM.JK,Asuransi Dayin Mitra Tbk.
+ASGR.JK,Astra Graphia Tbk.
+ASHA.JK,Cilacap Samudera Fishing Indus
+ASII.JK,Astra International Tbk.
+ASJT.JK,Asuransi Jasa Tania Tbk.
+ASLC.JK,Autopedia Sukses Lestari Tbk.
+ASLI.JK,Asri Karya Lestari Tbk.
+ASMI.JK,Asuransi Maximus Graha Persada
+ASPI.JK,Andalan Sakti Primaindo Tbk.
+ASRI.JK,Alam Sutera Realty Tbk.
+ASRM.JK,Asuransi Ramayana Tbk.
+ASSA.JK,Adi Sarana Armada Tbk.
+ATAP.JK,Trimitra Prawara Goldland Tbk.
+ATIC.JK,Anabatic Technologies Tbk.
+ATLA.JK,Atlantis Subsea Indonesia Tbk.
+AUTO.JK,Astra Otoparts Tbk.
+AVIA.JK,Avia Avian Tbk.
+AWAN.JK,Era Digital Media Tbk.
+AXIO.JK,Tera Data Indonusa Tbk.
+AYAM.JK,Janu Putra Sejahtera Tbk.
+AYLS.JK,Agro Yasa Lestari Tbk.
+BABP.JK,Bank MNC Internasional Tbk.
+BABY.JK,Multitrend Indo Tbk.
+BACA.JK,Bank Capital Indonesia Tbk.
+BAIK.JK,Bersama Mencapai Puncak Tbk.
+BAJA.JK,Saranacentral Bajatama Tbk.
+BALI.JK,Bali Towerindo Sentra Tbk.
+BANK.JK,Bank Aladin Syariah Tbk.
+BAPA.JK,Bekasi Asri Pemula Tbk.
+BAPI.JK,Bhakti Agung Propertindo Tbk.
+BATA.JK,Sepatu Bata Tbk.
+BATR.JK,Benteng Api Technic Tbk.
+BAUT.JK,Mitra Angkasa Sejahtera Tbk.
+BAYU.JK,Bayu Buana Tbk
+BBCA.JK,Bank Central Asia Tbk.
+BBHI.JK,Allo Bank Indonesia Tbk.
+BBKP.JK,Bank KB Bukopin Tbk.
+BBLD.JK,Buana Finance Tbk.
+BBMD.JK,Bank Mestika Dharma Tbk.
+BBNI.JK,Bank Negara Indonesia (Persero
+BBRI.JK,Bank Rakyat Indonesia (Persero
+BBRM.JK,Pelayaran Nasional Bina Buana
+BBSI.JK,Krom Bank Indonesia Tbk.
+BBSS.JK,Bumi Benowo Sukses Sejahtera T
+BBTN.JK,Bank Tabungan Negara (Persero)
+BBYB.JK,Bank Neo Commerce Tbk.
+BCAP.JK,MNC Kapital Indonesia Tbk.
+BCIC.JK,Bank JTrust Indonesia Tbk.
+BCIP.JK,Bumi Citra Permai Tbk.
+BDKR.JK,Berdikari Pondasi Perkasa Tbk.
+BDMN.JK,Bank Danamon Indonesia Tbk.
+BEBS.JK,Berkah Beton Sadaya Tbk.
+BEEF.JK,Estika Tata Tiara Tbk.
+BEER.JK,Jobubu Jarum Minahasa Tbk.
+BEKS.JK,Bank Pembangunan Daerah Banten
+BELI.JK,Global Digital Niaga Tbk.
+BELL.JK,Trisula Textile Industries Tbk
+BESS.JK,Batulicin Nusantara Maritim Tb
+BEST.JK,Bekasi Fajar Industrial Estate
+BFIN.JK,BFI Finance  Indonesia Tbk.
+BGTG.JK,Bank Ganesha Tbk.
+BHAT.JK,Bhakti Multi Artha Tbk.
+BHIT.JK,MNC Asia Holding Tbk.
+BIKA.JK,Binakarya Jaya Abadi Tbk.
+BIKE.JK,Sepeda Bersama Indonesia Tbk.
+BIMA.JK,Primarindo Asia Infrastructure
+BINA.JK,Bank Ina Perdana Tbk.
+BINO.JK,Perma Plasindo Tbk.
+BIPI.JK,Astrindo Nusantara Infrastrukt
+BIPP.JK,Bhuwanatala Indah Permai Tbk.
+BIRD.JK,Blue Bird Tbk.
+BISI.JK,BISI International Tbk.
+BJBR.JK,Bank Pembangunan Daerah Jawa B
+BJTM.JK,Bank Pembangunan Daerah Jawa T
+BKDP.JK,Bukit Darmo Property Tbk
+BKSL.JK,Sentul City Tbk.
+BKSW.JK,Bank QNB Indonesia Tbk.
+BLES.JK,Superior Prima Sukses Tbk.
+BLTA.JK,Berlian Laju Tanker Tbk
+BLTZ.JK,Graha Layar Prima Tbk.
+BLUE.JK,Berkah Prima Perkasa Tbk.
+BMAS.JK,Bank Maspion Indonesia Tbk.
+BMBL.JK,Lavender Bina Cendikia Tbk.
+BMHS.JK,Bundamedik Tbk.
+BMRI.JK,Bank Mandiri (Persero) Tbk.
+BMSR.JK,Bintang Mitra Semestaraya Tbk
+BMTR.JK,Global Mediacom Tbk.
+BNBA.JK,Bank Bumi Arta Tbk.
+BNBR.JK,Bakrie & Brothers Tbk
+BNGA.JK,Bank CIMB Niaga Tbk.
+BNII.JK,Bank Maybank Indonesia Tbk.
+BNLI.JK,Bank Permata Tbk.
+BOBA.JK,Formosa Ingredient Factory Tbk
+BOGA.JK,Bintang Oto Global Tbk.
+BOLA.JK,Bali Bintang Sejahtera Tbk.
+BOLT.JK,Garuda Metalindo Tbk.
+BOSS.JK,Borneo Olah Sarana Sukses Tbk.
+BPFI.JK,Woori Finance Indonesia Tbk.
+BPII.JK,Batavia Prosperindo Internasio
+BPTR.JK,Batavia Prosperindo Trans Tbk.
+BRAM.JK,Indo Kordsa Tbk.
+BREN.JK,Barito Renewables Energy Tbk.
+BRIS.JK,Bank Syariah Indonesia Tbk.
+BRMS.JK,Bumi Resources Minerals Tbk.
+BRNA.JK,Berlina Tbk.
+BRPT.JK,Barito Pacific Tbk.
+BSBK.JK,Wulandari Bangun Laksana Tbk.
+BSDE.JK,Bumi Serpong Damai Tbk.
+BSIM.JK,Bank Sinarmas Tbk.
+BSML.JK,Bintang Samudera Mandiri Lines
+BSSR.JK,Baramulti Suksessarana Tbk.
+BSWD.JK,Bank Of India Indonesia Tbk.
+BTEK.JK,Bumi Teknokultura Unggul Tbk
+BTEL.JK,Bakrie Telecom Tbk.
+BTON.JK,Betonjaya Manunggal Tbk.
+BTPN.JK,Bank BTPN Tbk.
+BTPS.JK,Bank BTPN Syariah Tbk.
+BUAH.JK,Segar Kumala Indonesia Tbk.
+BUDI.JK,Budi Starch & Sweetener Tbk.
+BUKA.JK,Bukalapak.com Tbk.
+BUKK.JK,Bukaka Teknik Utama Tbk.
+BULL.JK,Buana Lintas Lautan Tbk.
+BUMI.JK,Bumi Resources Tbk.
+BUVA.JK,Bukit Uluwatu Villa Tbk.
+BVIC.JK,Bank Victoria International Tb
+BWPT.JK,Eagle High Plantations Tbk.
+BYAN.JK,Bayan Resources Tbk.
+CAKK.JK,Cahayaputra Asa Keramik Tbk.
+CAMP.JK,Campina Ice Cream Industry Tbk
+CANI.JK,Capitol Nusantara Indonesia Tb
+CARE.JK,Metro Healthcare Indonesia Tbk
+CARS.JK,Industri dan Perdagangan Bintr
+CASA.JK,Capital Financial Indonesia Tb
+CASH.JK,Cashlez Worldwide Indonesia Tb
+CASS.JK,Cardig Aero Services Tbk.
+CBMF.JK,Cahaya Bintang Medan Tbk.
+CBPE.JK,Citra Buana Prasida Tbk.
+CBRE.JK,Cakra Buana Resources Energi T
+CBUT.JK,Citra Borneo Utama Tbk.
+CCSI.JK,Communication Cable Systems In
+CEKA.JK,Wilmar Cahaya Indonesia Tbk.
+CENT.JK,Centratama Telekomunikasi Indo
+CFIN.JK,Clipan Finance Indonesia Tbk.
+CGAS.JK,Citra Nusantara Gemilang Tbk.
+CHEM.JK,Chemstar Indonesia Tbk.
+CHIP.JK,Pelita Teknologi Global Tbk.
+CINT.JK,Chitose Internasional Tbk.
+CITA.JK,Cita Mineral Investindo Tbk.
+CITY.JK,Natura City Developments Tbk.
+CLAY.JK,Citra Putra Realty Tbk.
+CLEO.JK,Sariguna Primatirta Tbk.
+CLPI.JK,Colorpak Indonesia Tbk.
+CMNP.JK,Citra Marga Nusaphala Persada
+CMNT.JK,Cemindo Gemilang Tbk.
+CMPP.JK,AirAsia Indonesia Tbk.
+CMRY.JK,Cisarua Mountain Dairy Tbk.
+CNKO.JK,Exploitasi Energi Indonesia Tb
+CNMA.JK,Nusantara Sejahtera Raya Tbk.
+CNTX.JK,Century Textile Industry Tbk.
+COAL.JK,Black Diamond Resources Tbk.
+COCO.JK,Wahana Interfood Nusantara Tbk
+COWL.JK,Cowell Development Tbk.
 CPIN.JK,Charoen Pokphand Indonesia Tbk
-CTRA.JK,Ciputra Development Tbk
-ESSA.JK,ESSA Industries Indonesia Tbk
-EXCL.JK,XL Axiata Tbk
-GOTO.JK,GoTo Gojek Tokopedia Tbk
-HRUM.JK,Harum Energy Tbk
-HUMI.JK,Humpuss Maritim Internasional Tbk
+CPRI.JK,Capri Nusa Satu Properti Tbk.
+CPRO.JK,Central Proteina Prima Tbk.
+CRAB.JK,Toba Surimi Industries Tbk.
+CRSN.JK,Carsurin Tbk.
+CSAP.JK,Catur Sentosa Adiprana Tbk.
+CSIS.JK,Cahayasakti Investindo Sukses
+CSMI.JK,Cipta Selera Murni Tbk.
+CSRA.JK,Cisadane Sawit Raya Tbk.
+CTBN.JK,Citra Tubindo Tbk.
+CTRA.JK,Ciputra Development Tbk.
+CTTH.JK,Citatah Tbk.
+CUAN.JK,Petrindo Jaya Kreasi Tbk.
+CYBR.JK,ITSEC Asia Tbk.
+DADA.JK,Diamond Citra Propertindo Tbk.
+DART.JK,Duta Anggada Realty Tbk.
+DATA.JK,Remala Abadi Tbk.
+DAYA.JK,Duta Intidaya Tbk.
+DCII.JK,DCI Indonesia Tbk.
+DEAL.JK,Dewata Freightinternational Tb
+DEFI.JK,Danasupra Erapacific Tbk.
+DEPO.JK,Caturkarda Depo Bangunan Tbk.
+DEWA.JK,Darma Henwa Tbk
+DEWI.JK,Dewi Shri Farmindo Tbk.
+DFAM.JK,Dafam Property Indonesia Tbk.
+DGIK.JK,Nusa Konstruksi Enjiniring Tbk
+DGNS.JK,Diagnos Laboratorium Utama Tbk
+DIGI.JK,Arkadia Digital Media Tbk.
+DILD.JK,Intiland Development Tbk.
+DIVA.JK,Distribusi Voucher Nusantara T
+DKFT.JK,Central Omega Resources Tbk.
+DLTA.JK,Delta Djakarta Tbk.
+DMAS.JK,Puradelta Lestari Tbk.
+DMMX.JK,Digital Mediatama Maxima Tbk.
+DMND.JK,Diamond Food Indonesia Tbk.
+DNAR.JK,Bank Oke Indonesia Tbk.
+DNET.JK,Indoritel Makmur Internasional
+DOID.JK,Delta Dunia Makmur Tbk.
+DOOH.JK,Era Media Sejahtera Tbk.
+DPNS.JK,Duta Pertiwi Nusantara Tbk.
+DPUM.JK,Dua Putra Utama Makmur Tbk.
+DRMA.JK,Dharma Polimetal Tbk.
+DSFI.JK,Dharma Samudera Fishing Indust
+DSNG.JK,Dharma Satya Nusantara Tbk.
+DSSA.JK,Dian Swastatika Sentosa Tbk
+DUCK.JK,Jaya Bersama Indo Tbk.
+DUTI.JK,Duta Pertiwi Tbk
+DVLA.JK,Darya-Varia Laboratoria Tbk.
+DWGL.JK,Dwi Guna Laksana Tbk.
+DYAN.JK,Dyandra Media International Tb
+EAST.JK,Eastparc Hotel Tbk.
+ECII.JK,Electronic City Indonesia Tbk.
+EDGE.JK,Indointernet Tbk.
+EKAD.JK,Ekadharma International Tbk.
+ELIT.JK,Data Sinergitama Jaya Tbk.
+ELPI.JK,Pelayaran Nasional Ekalya Purn
+ELSA.JK,Elnusa Tbk.
+ELTY.JK,Bakrieland Development Tbk.
+EMDE.JK,Megapolitan Developments Tbk.
+EMTK.JK,Elang Mahkota Teknologi Tbk.
+ENAK.JK,Champ Resto Indonesia Tbk.
+ENRG.JK,Energi Mega Persada Tbk.
+ENVY.JK,Envy Technologies Indonesia Tb
+ENZO.JK,Morenzo Abadi Perkasa Tbk.
+EPAC.JK,Megalestari Epack Sentosaraya
+EPMT.JK,Enseval Putera Megatrading Tbk
+ERAA.JK,Erajaya Swasembada Tbk.
+ERAL.JK,Sinar Eka Selaras Tbk.
+ERTX.JK,Eratex Djaja Tbk.
+ESIP.JK,Sinergi Inti Plastindo Tbk.
+ESSA.JK,ESSA Industries Indonesia Tbk.
+ESTA.JK,Esta Multi Usaha Tbk.
+ESTI.JK,Ever Shine Tex Tbk.
+ETWA.JK,Eterindo Wahanatama Tbk
+EURO.JK,Estee Gold Feet Tbk.
+EXCL.JK,XL Axiata Tbk.
+FAPA.JK,FAP Agri Tbk.
+FAST.JK,Fast Food Indonesia Tbk.
+FASW.JK,Fajar Surya Wisesa Tbk.
+FILM.JK,MD Pictures Tbk.
+FIMP.JK,Fimperkasa Utama Tbk.
+FIRE.JK,Alfa Energi Investama Tbk.
+FISH.JK,FKS Multi Agro Tbk.
+FITT.JK,Hotel Fitra International Tbk.
+FLMC.JK,Falmaco Nonwoven Industri Tbk.
+FMII.JK,Fortune Mate Indonesia Tbk
+FOLK.JK,Multi Garam Utama Tbk.
+FOOD.JK,Sentra Food Indonesia Tbk.
+FORU.JK,Fortune Indonesia Tbk
+FORZ.JK,Forza Land Indonesia Tbk.
+FPNI.JK,Lotte Chemical Titan Tbk.
+FREN.JK,Smartfren Telecom Tbk.
+FUJI.JK,Fuji Finance Indonesia Tbk.
+FUTR.JK,Lini Imaji Kreasi Ekosistem Tb
+FWCT.JK,Wijaya Cahaya Timber Tbk.
+GAMA.JK,Aksara Global Development Tbk.
+GDST.JK,Gunawan Dianjaya Steel Tbk.
+GDYR.JK,Goodyear Indonesia Tbk.
+GEMA.JK,Gema Grahasarana Tbk.
+GEMS.JK,Golden Energy Mines Tbk.
+GGRM.JK,Gudang Garam Tbk.
+GGRP.JK,Gunung Raja Paksi Tbk.
+GHON.JK,Gihon Telekomunikasi Indonesia
+GIAA.JK,Garuda Indonesia (Persero) Tbk
+GJTL.JK,Gajah Tunggal Tbk.
+GLOB.JK,Globe Kita Terang Tbk.
+GLVA.JK,Galva Technologies Tbk.
+GMFI.JK,Garuda Maintenance Facility Ae
+GMTD.JK,Gowa Makassar Tourism Developm
+GOLD.JK,Visi Telekomunikasi Infrastruk
+GOLF.JK,Intra Golflink Resorts Tbk.
+GOLL.JK,Golden Plantation Tbk.
+GOOD.JK,Garudafood Putra Putri Jaya Tb
+GOTO.JK,GoTo Gojek Tokopedia Tbk.
+GPRA.JK,Perdana Gapuraprima Tbk.
+GPSO.JK,Geoprima Solusi Tbk.
+GRIA.JK,Ingria Pratama Capitalindo Tbk
+GRPH.JK,Griptha Putra Persada Tbk.
+GRPM.JK,Graha Prima Mentari Tbk.
+GSMF.JK,Equity Development Investment
+GTBO.JK,Garda Tujuh Buana Tbk
+GTRA.JK,Grahaprima Suksesmandiri Tbk.
+GTSI.JK,GTS Internasional Tbk.
+GULA.JK,Aman Agrindo Tbk.
+GUNA.JK,Gunanusa Eramandiri Tbk.
+GWSA.JK,Greenwood Sejahtera Tbk.
+GZCO.JK,Gozco Plantations Tbk.
+HADE.JK,Himalaya Energi Perkasa Tbk.
+HAIS.JK,Hasnur Internasional Shipping
+HAJJ.JK,Arsy Buana Travelindo Tbk.
+HALO.JK,Haloni Jane Tbk.
+HATM.JK,Habco Trans Maritima Tbk.
+HBAT.JK,Minahasa Membangun Hebat Tbk.
+HDFA.JK,Radana Bhaskara Finance Tbk.
+HDIT.JK,Hensel Davest Indonesia Tbk.
+HDTX.JK,Panasia Indo Resources Tbk.
+HEAL.JK,Medikaloka Hermina Tbk.
+HELI.JK,Jaya Trishindo Tbk.
+HERO.JK,Hero Supermarket Tbk.
+HEXA.JK,Hexindo Adiperkasa Tbk.
+HILL.JK,Hillcon Tbk.
+HITS.JK,Humpuss Intermoda Transportasi
+HKMU.JK,HK Metals Utama Tbk.
+HMSP.JK,H.M. Sampoerna Tbk.
+HOKI.JK,Buyung Poetra Sembada Tbk.
+HOME.JK,Hotel Mandarine Regency Tbk.
+HOMI.JK,Grand House Mulia Tbk.
+HOPE.JK,Harapan Duta Pertiwi Tbk.
+HOTL.JK,Saraswati Griya Lestari Tbk.
+HRME.JK,Menteng Heritage Realty Tbk.
+HRTA.JK,Hartadinata Abadi Tbk.
+HRUM.JK,Harum Energy Tbk.
+HUMI.JK,Humpuss Maritim Internasional
+HYGN.JK,Ecocare Indo Pasifik Tbk.
+IATA.JK,MNC Energy Investments Tbk.
+IBFN.JK,Intan Baru Prana Tbk.
+IBOS.JK,Indo Boga Sukses Tbk.
+IBST.JK,Inti Bangun Sejahtera Tbk.
 ICBP.JK,Indofood CBP Sukses Makmur Tbk
-INCO.JK,Vale Indonesia Tbk
-INDF.JK,Indofood Sukses Makmur Tbk
-INKP.JK,Indah Kiat Pulp & Paper Tbk
-ISAT.JK,Indosat Tbk
-ITMG.JK,Indo Tambangraya Megah Tbk
-KLBF.JK,Kalbe Farma Tbk
-MDKA.JK,Merdeka Copper Gold Tbk
+ICON.JK,Island Concepts Indonesia Tbk.
+IDEA.JK,Idea Indonesia Akademi Tbk.
+IDPR.JK,Indonesia Pondasi Raya Tbk.
+IFII.JK,Indonesia Fibreboard Industry
+IFSH.JK,Ifishdeco Tbk.
+IGAR.JK,Champion Pacific Indonesia Tbk
+IIKP.JK,Inti Agri Resources Tbk
+IKAI.JK,Intikeramik Alamasri Industri
+IKAN.JK,Era Mandiri Cemerlang Tbk.
+IKBI.JK,Sumi Indo Kabel Tbk.
+IKPM.JK,Ikapharmindo Putramas Tbk.
+IMAS.JK,Indomobil Sukses Internasional
+IMJS.JK,Indomobil Multi Jasa Tbk.
+IMPC.JK,Impack Pratama Industri Tbk.
+INAF.JK,Indofarma Tbk.
+INAI.JK,Indal Aluminium Industry Tbk.
+INCF.JK,Indo Komoditi Korpora Tbk.
+INCI.JK,Intanwijaya Internasional Tbk
+INCO.JK,Vale Indonesia Tbk.
+INDF.JK,Indofood Sukses Makmur Tbk.
+INDO.JK,Royalindo Investa Wijaya Tbk.
+INDR.JK,Indo-Rama Synthetics Tbk.
+INDS.JK,Indospring Tbk.
+INDX.JK,Tanah Laut Tbk
+INDY.JK,Indika Energy Tbk.
+INET.JK,Sinergi Inti Andalan Prima Tbk
+INKP.JK,Indah Kiat Pulp & Paper Tbk.
+INOV.JK,Inocycle Technology Group Tbk.
+INPC.JK,Bank Artha Graha Internasional
+INPP.JK,Indonesian Paradise Property T
+INPS.JK,Indah Prakasa Sentosa Tbk.
+INRU.JK,Toba Pulp Lestari Tbk.
+INTA.JK,Intraco Penta Tbk.
+INTD.JK,Inter Delta Tbk
+INTP.JK,Indocement Tunggal Prakarsa Tb
+IOTF.JK,Sumber Sinergi Makmur Tbk.
+IPAC.JK,Era Graharealty Tbk.
+IPCC.JK,Indonesia Kendaraan Terminal T
+IPCM.JK,Jasa Armada Indonesia Tbk.
+IPOL.JK,Indopoly Swakarsa Industry Tbk
+IPPE.JK,Indo Pureco Pratama Tbk.
+IPTV.JK,MNC Vision Networks Tbk.
+IRRA.JK,Itama Ranoraya Tbk.
+IRSX.JK,Aviana Sinar Abadi Tbk.
+ISAP.JK,Isra Presisi Indonesia Tbk.
+ISAT.JK,Indosat Tbk.
+ISEA.JK,Indo American Seafoods Tbk.
+ISSP.JK,Steel Pipe Industry of Indones
+ITIC.JK,Indonesian Tobacco Tbk.
+ITMA.JK,Sumber Energi Andalan Tbk.
+ITMG.JK,Indo Tambangraya Megah Tbk.
+JARR.JK,Jhonlin Agro Raya Tbk.
+JAST.JK,Jasnita Telekomindo Tbk.
+JATI.JK,Informasi Teknologi Indonesia
+JAWA.JK,Jaya Agra Wattie Tbk.
+JAYA.JK,Armada Berjaya Trans Tbk.
+JECC.JK,Jembo Cable Company Tbk.
+JGLE.JK,Graha Andrasentra Propertindo
+JIHD.JK,Jakarta International Hotels &
+JKON.JK,Jaya Konstruksi Manggala Prata
+JKSW.JK,Jakarta Kyoei Steel Works Tbk.
+JMAS.JK,Asuransi Jiwa Syariah Jasa Mit
+JPFA.JK,Japfa Comfeed Indonesia Tbk.
+JRPT.JK,Jaya Real Property Tbk.
+JSKY.JK,Sky Energy Indonesia Tbk.
+JSMR.JK,Jasa Marga (Persero) Tbk.
+JSPT.JK,Jakarta Setiabudi Internasiona
+JTPE.JK,Jasuindo Tiga Perkasa Tbk.
+KAEF.JK,Kimia Farma Tbk.
+KARW.JK,Meratus Jasa Prima Tbk.
+KAYU.JK,Darmi Bersaudara Tbk.
+KBAG.JK,Karya Bersama Anugerah Tbk.
+KBLI.JK,KMI Wire & Cable Tbk.
+KBLM.JK,Kabelindo Murni Tbk.
+KBLV.JK,First Media Tbk.
+KBRI.JK,Kertas Basuki Rachmat Indonesi
+KDSI.JK,Kedawung Setia Industrial Tbk.
+KDTN.JK,Puri Sentul Permai Tbk.
+KEEN.JK,Kencana Energi Lestari Tbk.
+KEJU.JK,Mulia Boga Raya Tbk.
+KETR.JK,Ketrosden Triasmitra Tbk.
+KIAS.JK,Keramika Indonesia Assosiasi T
+KICI.JK,Kedaung Indah Can Tbk
+KIJA.JK,Kawasan Industri Jababeka Tbk.
+KING.JK,Hoffmen Cleanindo Tbk.
+KINO.JK,Kino Indonesia Tbk.
+KIOS.JK,Kioson Komersial Indonesia Tbk
+KJEN.JK,Krida Jaringan Nusantara Tbk.
+KKES.JK,Kusuma Kemindo Sentosa Tbk.
+KKGI.JK,Resource Alam Indonesia Tbk.
+KLAS.JK,Pelayaran Kurnia Lautan Semest
+KLBF.JK,Kalbe Farma Tbk.
+KLIN.JK,Klinko Karya Imaji Tbk.
+KMDS.JK,Kurniamitra Duta Sentosa Tbk.
+KMTR.JK,Kirana Megatara Tbk.
+KOBX.JK,Kobexindo Tractors Tbk.
+KOCI.JK,Kokoh Exa Nusantara Tbk.
+KOIN.JK,Kokoh Inti Arebama Tbk
+KOKA.JK,Koka Indonesia Tbk.
+KONI.JK,Perdana Bangun Pusaka Tbk
+KOPI.JK,Mitra Energi Persada Tbk.
+KOTA.JK,DMS Propertindo Tbk.
+KPAL.JK,Steadfast Marine Tbk.
+KPAS.JK,Cottonindo Ariesta Tbk.
+KPIG.JK,MNC Land Tbk.
+KRAH.JK,Grand Kartech Tbk.
+KRAS.JK,Krakatau Steel (Persero) Tbk.
+KREN.JK,Quantum Clovera Investama Tbk.
+KRYA.JK,Bangun Karya Perkasa Jaya Tbk.
+KUAS.JK,Ace Oldfields Tbk.
+LABA.JK,Ladangbaja Murni Tbk.
+LABS.JK,UBC Medical Indonesia Tbk.
+LAJU.JK,Jasa Berdikari Logistics Tbk.
+LAND.JK,Trimitra Propertindo Tbk.
+LAPD.JK,Leyand International Tbk.
+LCGP.JK,Eureka Prima Jakarta Tbk.
+LCKM.JK,LCK Global Kedaton Tbk.
+LEAD.JK,Logindo Samudramakmur Tbk.
+LFLO.JK,Imago Mulia Persada Tbk.
+LIFE.JK,MSIG Life Insurance Indonesia
+LINK.JK,Link Net Tbk.
+LION.JK,Lion Metal Works Tbk.
+LIVE.JK,Homeco Victoria Makmur Tbk.
+LMAS.JK,Limas Indonesia Makmur Tbk
+LMAX.JK,Lupromax Pelumas Indonesia Tbk
+LMPI.JK,Langgeng Makmur Industri Tbk.
+LMSH.JK,Lionmesh Prima Tbk.
+LOPI.JK,Logisticsplus International Tb
+LPCK.JK,Lippo Cikarang Tbk
+LPGI.JK,Lippo General Insurance Tbk.
+LPIN.JK,Multi Prima Sejahtera Tbk
+LPKR.JK,Lippo Karawaci Tbk.
+LPLI.JK,Star Pacific Tbk
+LPPF.JK,Matahari Department Store Tbk.
+LPPS.JK,Lenox Pasifik Investama Tbk.
+LRNA.JK,Eka Sari Lorena Transport Tbk.
+LSIP.JK,PP London Sumatra Indonesia Tb
+LTLS.JK,Lautan Luas Tbk.
+LUCK.JK,Sentral Mitra Informatika Tbk.
+LUCY.JK,Lima Dua Lima Tiga Tbk.
+MABA.JK,Marga Abhinaya Abadi Tbk.
+MAGP.JK,Multi Agro Gemilang Plantation
+MAHA.JK,Mandiri Herindo Adiperkasa Tbk
+MAIN.JK,Malindo Feedmill Tbk.
+MAMI.JK,Mas Murni Indonesia Tbk
+MANG.JK,Manggung Polahraya Tbk.
+MAPA.JK,Map Aktif Adiperkasa Tbk.
+MAPB.JK,MAP Boga Adiperkasa Tbk.
+MAPI.JK,Mitra Adiperkasa Tbk.
+MARI.JK,Mahaka Radio Integra Tbk.
+MARK.JK,Mark Dynamics Indonesia Tbk.
+MASA.JK,Multistrada Arah Sarana Tbk.
+MASB.JK,Bank Multiarta Sentosa Tbk.
+MAXI.JK,Maxindo Karya Anugerah Tbk.
+MAYA.JK,Bank Mayapada Internasional Tb
+MBAP.JK,Mitrabara Adiperdana Tbk.
+MBMA.JK,Merdeka Battery Materials Tbk.
+MBSS.JK,Mitrabahtera Segara Sejati Tbk
+MBTO.JK,Martina Berto Tbk.
+MCAS.JK,M Cash Integrasi Tbk.
+MCOL.JK,Prima Andalan Mandiri Tbk.
+MCOR.JK,Bank China Construction Bank I
+MDIA.JK,Intermedia Capital Tbk.
+MDKA.JK,Merdeka Copper Gold Tbk.
+MDKI.JK,Emdeki Utama Tbk.
+MDLN.JK,Modernland Realty Tbk.
+MDRN.JK,Modern Internasional Tbk.
 MEDC.JK,Medco Energi Internasional Tbk
-PGAS.JK,Perusahaan Gas Negara Tbk
-PTBA.JK,Bukit Asam Tbk
-SMGR.JK,Semen Indonesia (Persero) Tbk
+MEDS.JK,Hetzer Medical Indonesia Tbk.
+MEGA.JK,Bank Mega Tbk.
+MEJA.JK,Harta Djaya Karya Tbk.
+MENN.JK,Menn Teknologi Indonesia Tbk.
+MERK.JK,Merck Tbk.
+META.JK,Nusantara Infrastructure Tbk.
+MFIN.JK,Mandala Multifinance Tbk.
+MFMI.JK,Multifiling Mitra Indonesia Tb
+MGLV.JK,Panca Anugrah Wisesa Tbk.
+MGNA.JK,Magna Investama Mandiri Tbk.
+MGRO.JK,Mahkota Group Tbk.
+MHKI.JK,Multi Hanna Kreasindo Tbk.
+MICE.JK,Multi Indocitra Tbk.
+MIDI.JK,Midi Utama Indonesia Tbk.
+MIKA.JK,Mitra Keluarga Karyasehat Tbk.
+MINA.JK,Sanurhasta Mitra Tbk.
+MIRA.JK,Mitra International Resources
+MITI.JK,Mitra Investindo Tbk.
+MKAP.JK,Multikarya Asia Pasifik Raya T
+MKNT.JK,Mitra Komunikasi Nusantara Tbk
+MKPI.JK,Metropolitan Kentjana Tbk.
+MKTR.JK,Menthobi Karyatama Raya Tbk.
+MLBI.JK,Multi Bintang Indonesia Tbk.
+MLIA.JK,Mulia Industrindo Tbk
+MLPL.JK,Multipolar Tbk.
+MLPT.JK,Multipolar Technology Tbk.
+MMIX.JK,Multi Medika Internasional Tbk
+MMLP.JK,Mega Manunggal Property Tbk.
+MNCN.JK,Media Nusantara Citra Tbk.
+MOLI.JK,Madusari Murni Indah Tbk.
+MORA.JK,Mora Telematika Indonesia Tbk.
+MPIX.JK,Mitra Pedagang Indonesia Tbk.
+MPMX.JK,Mitra Pinasthika Mustika Tbk.
+MPOW.JK,Megapower Makmur Tbk.
+MPPA.JK,Matahari Putra Prima Tbk.
+MPRO.JK,Maha Properti Indonesia Tbk.
+MPXL.JK,MPX Logistics International Tb
+MRAT.JK,Mustika Ratu Tbk.
+MREI.JK,Maskapai Reasuransi Indonesia
+MSIE.JK,Multisarana Intan Eduka Tbk.
+MSIN.JK,MNC Digital Entertainment Tbk.
+MSJA.JK,Multi Spunindo Jaya Tbk.
+MSKY.JK,MNC Sky Vision Tbk.
+MSTI.JK,Mastersystem Infotama Tbk.
+MTDL.JK,Metrodata Electronics Tbk.
+MTEL.JK,Dayamitra Telekomunikasi Tbk.
+MTFN.JK,Capitalinc Investment Tbk.
+MTLA.JK,Metropolitan Land Tbk.
+MTMH.JK,Murni Sadar Tbk.
+MTPS.JK,Meta Epsi Tbk.
+MTRA.JK,Mitra Pemuda Tbk.
+MTSM.JK,Metro Realty Tbk.
+MTWI.JK,Malacca Trust Wuwungan Insuran
+MUTU.JK,Mutuagung Lestari Tbk.
+MYOH.JK,Samindo Resources Tbk.
+MYOR.JK,Mayora Indah Tbk.
+MYRX.JK,Hanson International Tbk.
+MYTX.JK,Asia Pacific Investama Tbk.
+NANO.JK,Nanotech Indonesia Global Tbk.
+NASA.JK,Andalan Perkasa Abadi Tbk.
+NASI.JK,Wahana Inti Makmur Tbk.
+NATO.JK,Surya Permata Andalan Tbk.
+NAYZ.JK,Hassana Boga Sejahtera Tbk.
+NCKL.JK,Trimegah Bangun Persada Tbk.
+NELY.JK,Pelayaran Nelly Dwi Putri Tbk.
+NETV.JK,Net Visi Media Tbk.
+NFCX.JK,NFC Indonesia Tbk.
+NICE.JK,Adhi Kartiko Pratama Tbk.
+NICK.JK,Charnic Capital Tbk.
+NICL.JK,PAM Mineral Tbk.
+NIKL.JK,Pelat Timah Nusantara Tbk.
+NINE.JK,Techno9 Indonesia Tbk.
+NIPS.JK,Nipress Tbk.
+NIRO.JK,City Retail Developments Tbk.
+NISP.JK,Bank OCBC NISP Tbk.
+NOBU.JK,Bank Nationalnobu Tbk.
+NPGF.JK,Nusa Palapa Gemilang Tbk.
+NRCA.JK,Nusa Raya Cipta Tbk.
+NSSS.JK,Nusantara Sawit Sejahtera Tbk.
+NTBK.JK,Nusatama Berkah Tbk.
+NUSA.JK,Sinergi Megah Internusa Tbk.
+NZIA.JK,Nusantara Almazia Tbk.
+OASA.JK,Maharaksa Biru Energi Tbk.
+OBMD.JK,OBM Drilchem Tbk.
+OCAP.JK,Onix Capital Tbk.
+OILS.JK,Indo Oil Perkasa Tbk.
+OKAS.JK,Ancora Indonesia Resources Tbk
+OLIV.JK,Oscar Mitra Sukses Sejahtera T
+OMED.JK,Jayamas Medica Industri Tbk.
+OMRE.JK,Indonesia Prima Property Tbk
+OPMS.JK,Optima Prima Metal Sinergi Tbk
+PACK.JK,Solusi Kemasan Digital Tbk.
+PADA.JK,Personel Alih Daya Tbk.
+PADI.JK,Minna Padi Investama Sekuritas
+PALM.JK,Provident Investasi Bersama Tb
+PAMG.JK,Bima Sakti Pertiwi Tbk.
+PANI.JK,Pantai Indah Kapuk Dua Tbk.
+PANR.JK,Panorama Sentrawisata Tbk.
+PANS.JK,Panin Sekuritas Tbk.
+PART.JK,Cipta Perdana Lancar Tbk.
+PBID.JK,Panca Budi Idaman Tbk.
+PBRX.JK,Pan Brothers Tbk.
+PBSA.JK,Paramita Bangun Sarana Tbk.
+PCAR.JK,Prima Cakrawala Abadi Tbk.
+PDES.JK,Destinasi Tirta Nusantara Tbk
+PDPP.JK,Primadaya Plastisindo Tbk.
+PEGE.JK,Panca Global Kapital Tbk.
+PEHA.JK,Phapros Tbk.
+PEVE.JK,Penta Valent Tbk.
+PGAS.JK,Perusahaan Gas Negara Tbk.
+PGEO.JK,Pertamina Geothermal Energy Tb
+PGJO.JK,Tourindo Guide Indonesia Tbk.
+PGLI.JK,Pembangunan Graha Lestari Inda
+PGUN.JK,Pradiksi Gunatama Tbk.
+PICO.JK,Pelangi Indah Canindo Tbk
+PIPA.JK,Multi Makmur Lemindo Tbk.
+PJAA.JK,Pembangunan Jaya Ancol Tbk.
+PKPK.JK,Perdana Karya Perkasa Tbk
+PLAN.JK,Planet Properindo Jaya Tbk.
+PLAS.JK,Polaris Investama Tbk
+PLIN.JK,Plaza Indonesia Realty Tbk.
+PMJS.JK,Putra Mandiri Jembar Tbk.
+PMMP.JK,Panca Mitra Multiperdana Tbk.
+PNBN.JK,Bank Pan Indonesia Tbk
+PNBS.JK,Bank Panin Dubai Syariah Tbk.
+PNGO.JK,Pinago Utama Tbk.
+PNIN.JK,Paninvest Tbk.
+PNLF.JK,Panin Financial Tbk.
+PNSE.JK,Pudjiadi & Sons Tbk.
+POLA.JK,Pool Advista Finance Tbk.
+POLI.JK,Pollux Hotels Group Tbk.
+POLL.JK,Pollux Properties Indonesia Tb
+POLU.JK,Golden Flower Tbk.
+POLY.JK,Asia Pacific Fibers Tbk
+POOL.JK,Pool Advista Indonesia Tbk.
+PORT.JK,Nusantara Pelabuhan Handal Tbk
+POSA.JK,Bliss Properti Indonesia Tbk.
+POWR.JK,Cikarang Listrindo Tbk.
+PPGL.JK,Prima Globalindo Logistik Tbk.
+PPRE.JK,PP Presisi Tbk.
+PPRI.JK,Paperocks Indonesia Tbk.
+PPRO.JK,PP Properti Tbk.
+PRAS.JK,Prima Alloy Steel Universal Tb
+PRAY.JK,Famon Awal Bros Sedaya Tbk.
+PRDA.JK,Prodia Widyahusada Tbk.
+PRIM.JK,Royal Prima Tbk.
+PSAB.JK,J Resources Asia Pasifik Tbk.
+PSDN.JK,Prasidha Aneka Niaga Tbk
+PSGO.JK,Palma Serasih Tbk.
+PSKT.JK,Red Planet Indonesia Tbk.
+PSSI.JK,IMC Pelita Logistik Tbk.
+PTBA.JK,Bukit Asam Tbk.
+PTDU.JK,Djasa Ubersakti Tbk.
+PTIS.JK,Indo Straits Tbk.
+PTMP.JK,Mitra Pack Tbk.
+PTPP.JK,PP (Persero) Tbk.
+PTPS.JK,Pulau Subur Tbk.
+PTPW.JK,Pratama Widya Tbk.
+PTRO.JK,Petrosea Tbk.
+PTSN.JK,Sat Nusapersada Tbk
+PTSP.JK,Pioneerindo Gourmet Internatio
+PUDP.JK,Pudjiadi Prestige Tbk.
+PURA.JK,Putra Rajawali Kencana Tbk.
+PURE.JK,Trinitan Metals and Minerals T
+PURI.JK,Puri Global Sukses Tbk.
+PWON.JK,Pakuwon Jati Tbk.
+PYFA.JK,Pyridam Farma Tbk
+PZZA.JK,Sarimelati Kencana Tbk.
+RAAM.JK,Tripar Multivision Plus Tbk.
+RAFI.JK,Sari Kreasi Boga Tbk.
+RAJA.JK,Rukun Raharja Tbk.
+RALS.JK,Ramayana Lestari Sentosa Tbk.
+RANC.JK,Supra Boga Lestari Tbk.
+RBMS.JK,Ristia Bintang Mahkotasejati T
+RCCC.JK,Utama Radar Cahaya Tbk.
+RDTX.JK,Roda Vivatex Tbk
+REAL.JK,Repower Asia Indonesia Tbk.
+RELF.JK,Graha Mitra Asia Tbk.
+RELI.JK,Reliance Sekuritas Indonesia T
+RGAS.JK,Kian Santang Muliatama Tbk.
+RICY.JK,Ricky Putra Globalindo Tbk
+RIGS.JK,Rig Tenders Indonesia Tbk.
+RIMO.JK,Rimo International Lestari Tbk
+RISE.JK,Jaya Sukses Makmur Sentosa Tbk
+RMKE.JK,RMK Energy Tbk.
+RMKO.JK,Royaltama Mulia Kontraktorindo
+ROCK.JK,Rockfields Properti Indonesia
+RODA.JK,Pikko Land Development Tbk.
+RONY.JK,Aesler Grup Internasional Tbk.
+ROTI.JK,Nippon Indosari Corpindo Tbk.
+RSCH.JK,Charlie Hospital Semarang Tbk.
+RSGK.JK,Kedoya Adyaraya Tbk.
+RUIS.JK,Radiant Utama Interinsco Tbk.
+RUNS.JK,Global Sukses Solusi Tbk.
+SAFE.JK,Steady Safe Tbk
+SAGE.JK,Saptausaha Gemilangindah Tbk.
+SAME.JK,Sarana Meditama Metropolitan T
+SAMF.JK,Saraswanti Anugerah Makmur Tbk
+SAPX.JK,Satria Antaran Prima Tbk.
+SATU.JK,Kota Satu Properti Tbk.
+SBAT.JK,Sejahtera Bintang Abadi Textil
+SBMA.JK,Surya Biru Murni Acetylene Tbk
+SCCO.JK,Supreme Cable Manufacturing &
+SCMA.JK,Surya Citra Media Tbk.
+SCNP.JK,Selaras Citra Nusantara Perkas
+SCPI.JK,Organon Pharma Indonesia Tbk.
+SDMU.JK,Sidomulyo Selaras Tbk.
+SDPC.JK,Millennium Pharmacon Internati
+SDRA.JK,Bank Woori Saudara Indonesia 1
+SEMA.JK,Semacom Integrated Tbk.
+SFAN.JK,Surya Fajar Capital Tbk.
+SGER.JK,Sumber Global Energy Tbk.
+SGRO.JK,Sampoerna Agro Tbk.
+SHID.JK,Hotel Sahid Jaya International
+SHIP.JK,Sillo Maritime Perdana Tbk.
+SICO.JK,Sigma Energy Compressindo Tbk.
+SIDO.JK,Industri Jamu dan Farmasi Sido
+SILO.JK,Siloam International Hospitals
+SIMA.JK,Siwani Makmur Tbk
+SIMP.JK,Salim Ivomas Pratama Tbk.
+SINI.JK,Singaraja Putra Tbk.
+SIPD.JK,Sreeya Sewu Indonesia Tbk.
+SKBM.JK,Sekar Bumi Tbk.
+SKLT.JK,Sekar Laut Tbk.
+SKRN.JK,Superkrane Mitra Utama Tbk.
+SKYB.JK,Northcliff Citranusa Indonesia
+SLIS.JK,Gaya Abadi Sempurna Tbk.
+SMAR.JK,Smart Tbk.
+SMBR.JK,Semen Baturaja Tbk.
+SMCB.JK,Solusi Bangun Indonesia Tbk.
+SMDM.JK,Suryamas Dutamakmur Tbk.
+SMDR.JK,Samudera Indonesia  Tbk.
+SMGA.JK,Sumber Mineral Global Abadi Tb
+SMGR.JK,Semen Indonesia (Persero) Tbk.
+SMIL.JK,Sarana Mitra Luas Tbk.
+SMKL.JK,Satyamitra Kemas Lestari Tbk.
+SMKM.JK,Sumber Mas Konstruksi Tbk.
+SMLE.JK,Sinergi Multi Lestarindo Tbk.
+SMMA.JK,Sinarmas Multiartha Tbk.
+SMMT.JK,Golden Eagle Energy Tbk.
+SMRA.JK,Summarecon Agung Tbk.
+SMRU.JK,SMR Utama Tbk.
+SMSM.JK,Selamat Sempurna Tbk.
+SNLK.JK,Sunter Lakeside Hotel Tbk.
+SOCI.JK,Soechi Lines Tbk.
+SOFA.JK,Boston Furniture Industries Tb
+SOHO.JK,Soho Global Health Tbk.
+SOLA.JK,Xolare RCR Energy Tbk.
+SONA.JK,Sona Topas Tourism Industry Tb
+SOSS.JK,Shield On Service Tbk.
+SOTS.JK,Satria Mega Kencana Tbk.
+SOUL.JK,Mitra Tirta Buwana Tbk.
+SPMA.JK,Suparma Tbk.
+SPRE.JK,Soraya Berjaya Indonesia Tbk.
+SPTO.JK,Surya Pertiwi Tbk.
+SQMI.JK,Wilton Makmur Indonesia Tbk.
+SRAJ.JK,Sejahteraraya Anugrahjaya Tbk.
+SRIL.JK,Sri Rejeki Isman Tbk.
+SRSN.JK,Indo Acidatama Tbk
+SRTG.JK,Saratoga Investama Sedaya Tbk.
+SSIA.JK,Surya Semesta Internusa Tbk.
+SSMS.JK,Sawit Sumbermas Sarana Tbk.
+SSTM.JK,Sunson Textile Manufacture Tbk
+STAA.JK,Sumber Tani Agung Resources Tb
+STAR.JK,Buana Artha Anugerah Tbk.
+STRK.JK,Lovina Beach Brewery Tbk.
+STTP.JK,Siantar Top Tbk.
+SUGI.JK,Sugih Energy Tbk.
+SULI.JK,SLJ Global Tbk.
+SUNI.JK,Sunindo Pratama Tbk.
+SUPR.JK,Solusi Tunas Pratama Tbk.
+SURE.JK,Super Energy Tbk.
+SURI.JK,Maja Agung Latexindo Tbk.
+SWAT.JK,Sriwahana Adityakarta Tbk.
+SWID.JK,Saraswanti Indoland Developmen
+TALF.JK,Tunas Alfin Tbk.
+TAMA.JK,Lancartama Sejati Tbk.
+TAMU.JK,Pelayaran Tamarin Samudra Tbk.
+TAPG.JK,Triputra Agro Persada Tbk.
+TARA.JK,Agung Semesta Sejahtera Tbk.
+TAXI.JK,Express Transindo Utama Tbk.
+TAYS.JK,Jaya Swarasa Agung Tbk.
+TBIG.JK,Tower Bersama Infrastructure T
+TBLA.JK,Tunas Baru Lampung Tbk.
+TBMS.JK,Tembaga Mulia Semanan Tbk.
+TCID.JK,Mandom Indonesia Tbk.
+TCPI.JK,Transcoal Pacific Tbk.
+TDPM.JK,Tianrong Chemicals Industry Tb
+TEBE.JK,Dana Brata Luhur Tbk.
+TECH.JK,Indosterling Technomedia Tbk.
+TELE.JK,Omni Inovasi Indonesia Tbk.
+TFAS.JK,Telefast Indonesia Tbk.
+TFCO.JK,Tifico Fiber Indonesia Tbk.
+TGKA.JK,Tigaraksa Satria Tbk.
+TGRA.JK,Terregra Asia Energy Tbk.
+TGUK.JK,Platinum Wahab Nusantara Tbk.
+TIFA.JK,KDB Tifa Finance Tbk.
+TINS.JK,Timah Tbk.
+TIRA.JK,Tira Austenite Tbk
+TIRT.JK,Tirta Mahakam Resources Tbk
+TKIM.JK,Pabrik Kertas Tjiwi Kimia Tbk.
+TLDN.JK,Teladan Prima Agro Tbk.
 TLKM.JK,Telkom Indonesia (Persero) Tbk
-TPIA.JK,Chandra Asri Pacific Tbk
-UNTR.JK,United Tractors Tbk
-UNVR.JK,Unilever Indonesia Tbk
-WIFI.JK,Solusi Sinergi Digital Tbk
+TMAS.JK,Temas Tbk.
+TMPO.JK,Tempo Intimedia Tbk.
+TNCA.JK,Trimuda Nuansa Citra Tbk.
+TOBA.JK,TBS Energi Utama Tbk.
+TOOL.JK,Rohartindo Nusantara Luas Tbk.
+TOPS.JK,Totalindo Eka Persada Tbk.
+TOSK.JK,Topindo Solusi Komunika Tbk.
+TOTL.JK,Total Bangun Persada Tbk.
+TOTO.JK,Surya Toto Indonesia Tbk.
+TOWR.JK,Sarana Menara Nusantara Tbk.
+TOYS.JK,Sunindo Adipersada Tbk.
+TPIA.JK,Chandra Asri Pacific Tbk.
+TPMA.JK,Trans Power Marine Tbk.
+TRAM.JK,Trada Alam Minera Tbk.
+TRGU.JK,Cerestar Indonesia Tbk.
+TRIL.JK,Triwira Insanlestari Tbk.
+TRIM.JK,Trimegah Sekuritas Indonesia T
+TRIN.JK,Perintis Triniti Properti Tbk.
+TRIO.JK,Trikomsel Oke Tbk.
+TRIS.JK,Trisula International Tbk.
+TRJA.JK,Transkon Jaya Tbk.
+TRON.JK,Teknologi Karya Digital Nusa T
+TRST.JK,Trias Sentosa Tbk.
+TRUE.JK,Triniti Dinamik Tbk.
+TRUK.JK,Guna Timur Raya Tbk.
+TRUS.JK,Trust Finance Indonesia Tbk
+TSPC.JK,Tempo Scan Pacific Tbk.
+TUGU.JK,Asuransi Tugu Pratama Indonesi
+TYRE.JK,King Tire Indonesia Tbk.
+UANG.JK,Pakuan Tbk.
+UCID.JK,Uni-Charm Indonesia Tbk.
+UDNG.JK,Agro Bahari Nusantara Tbk.
+UFOE.JK,Damai Sejahtera Abadi Tbk.
+ULTJ.JK,Ultrajaya Milk Industry & Trad
+UNIC.JK,Unggul Indah Cahaya Tbk.
+UNIQ.JK,Ulima Nitra Tbk.
+UNIT.JK,Nusantara Inti Corpora Tbk
+UNSP.JK,Bakrie Sumatera Plantations Tb
+UNTD.JK,Terang Dunia Internusa Tbk.
+UNTR.JK,United Tractors Tbk.
+UNVR.JK,Unilever Indonesia Tbk.
+URBN.JK,Urban Jakarta Propertindo Tbk.
+UVCR.JK,Trimegah Karya Pratama Tbk.
+VAST.JK,Vastland Indonesia Tbk.
+VICI.JK,Victoria Care Indonesia Tbk.
+VICO.JK,Victoria Investama Tbk.
+VINS.JK,Victoria Insurance Tbk.
+VISI.JK,Satu Visi Putra Tbk.
+VIVA.JK,Visi Media Asia Tbk.
+VKTR.JK,VKTR Teknologi Mobilitas Tbk.
+VOKS.JK,Voksel Electric Tbk.
+VRNA.JK,Mizuho Leasing Indonesia Tbk.
+VTNY.JK,Venteny Fortuna International
+WAPO.JK,Wahana Pronatural Tbk.
+WEGE.JK,Wijaya Karya Bangunan Gedung T
+WEHA.JK,WEHA Transportasi Indonesia Tb
+WGSH.JK,Wira Global Solusi Tbk.
+WICO.JK,Wicaksana Overseas Internation
+WIDI.JK,Widiant Jaya Krenindo Tbk.
+WIFI.JK,Solusi Sinergi Digital Tbk.
+WIIM.JK,Wismilak Inti Makmur Tbk.
+WIKA.JK,Wijaya Karya (Persero) Tbk.
+WINE.JK,Hatten Bali Tbk.
+WINR.JK,Winner Nusantara Jaya Tbk.
+WINS.JK,Wintermar Offshore Marine Tbk.
+WIRG.JK,WIR ASIA Tbk.
+WMPP.JK,Widodo Makmur Perkasa Tbk.
+WMUU.JK,Widodo Makmur Unggas Tbk.
+WOMF.JK,Wahana Ottomitra Multiartha Tb
+WOOD.JK,Integra Indocabinet Tbk.
+WOWS.JK,Ginting Jaya Energi Tbk.
+WSBP.JK,Waskita Beton Precast Tbk.
+WSKT.JK,Waskita Karya (Persero) Tbk.
+WTON.JK,Wijaya Karya Beton Tbk.
+YELO.JK,Yelooo Integra Datanet Tbk.
+YPAS.JK,Yanaprima Hastapersada Tbk
+YULE.JK,Yulie Sekuritas Indonesia Tbk.
+ZATA.JK,Bersama Zatta Jaya Tbk.
+ZBRA.JK,Dosni Roha Indonesia Tbk.
+ZINC.JK,Kapuas Prima Coal Tbk.
+ZONE.JK,Mega Perintis Tbk.
+ZYRX.JK,Zyrexindo Mandiri Buana Tbk.

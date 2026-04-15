@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import io
+import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional
@@ -20,21 +21,10 @@ class YahooMarketData:
     auto_adjust: bool = False
     timeout: int = 30
 
-    def fetch(self, symbol: str, interval: str = '1d', period: str = 'max') -> pd.DataFrame:
-        import yfinance as yf
-
-        df = yf.download(
-            tickers=symbol,
-            interval=interval,
-            period=period,
-            auto_adjust=self.auto_adjust,
-            progress=False,
-            threads=False,
-        )
+    @staticmethod
+    def _standardize_ohlc(df: pd.DataFrame, symbol: str) -> pd.DataFrame:
         if isinstance(df.columns, pd.MultiIndex):
             df.columns = df.columns.get_level_values(0)
-        if df.empty:
-            raise ValueError(f'No data returned for {symbol}')
         rename_map = {c: str(c).title() for c in df.columns}
         df = df.rename(columns=rename_map)
         for col in ['Open', 'High', 'Low', 'Close', 'Volume']:
@@ -47,7 +37,68 @@ class YahooMarketData:
         df = df.dropna(subset=['Open', 'High', 'Low', 'Close'])
         if df.empty:
             raise ValueError(f'No valid OHLC rows returned for {symbol}')
+        if not isinstance(df.index, pd.DatetimeIndex):
+            df.index = pd.to_datetime(df.index)
+        df = df.sort_index()
         return df
+
+    def _fetch_via_yfinance_download(self, symbol: str, interval: str, period: str) -> pd.DataFrame:
+        import yfinance as yf
+
+        df = yf.download(
+            tickers=symbol,
+            interval=interval,
+            period=period,
+            auto_adjust=self.auto_adjust,
+            progress=False,
+            threads=False,
+        )
+        if df is None or df.empty:
+            raise ValueError(f'No data returned for {symbol} via yfinance.download')
+        return self._standardize_ohlc(df, symbol)
+
+    def _fetch_via_yfinance_ticker(self, symbol: str, interval: str, period: str) -> pd.DataFrame:
+        import yfinance as yf
+
+        ticker = yf.Ticker(symbol)
+        df = ticker.history(interval=interval, period=period, auto_adjust=self.auto_adjust)
+        if df is None or df.empty:
+            raise ValueError(f'No data returned for {symbol} via yfinance.Ticker.history')
+        return self._standardize_ohlc(df, symbol)
+
+    def _fetch_via_chart_api(self, symbol: str, interval: str, period: str) -> pd.DataFrame:
+        url = f'https://query1.finance.yahoo.com/v8/finance/chart/{quote(symbol)}?range={quote(period)}&interval={quote(interval)}&includeAdjustedClose=true&events=div%2Csplits'
+        req = Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urlopen(req, timeout=self.timeout) as resp:
+            payload = json.loads(resp.read().decode('utf-8', errors='ignore'))
+        result = (payload.get('chart') or {}).get('result') or []
+        if not result:
+            err = (payload.get('chart') or {}).get('error')
+            raise ValueError(f'Yahoo chart API returned no result for {symbol}: {err}')
+        node = result[0]
+        timestamps = node.get('timestamp') or []
+        quote_rows = (((node.get('indicators') or {}).get('quote') or [{}])[0])
+        if not timestamps:
+            raise ValueError(f'Yahoo chart API returned no timestamps for {symbol}')
+        df = pd.DataFrame({
+            'Open': quote_rows.get('open'),
+            'High': quote_rows.get('high'),
+            'Low': quote_rows.get('low'),
+            'Close': quote_rows.get('close'),
+            'Volume': quote_rows.get('volume'),
+        }, index=pd.to_datetime(timestamps, unit='s', utc=True))
+        if interval.endswith('mo') or interval.endswith('wk'):
+            df.index = df.index.tz_convert(None)
+        return self._standardize_ohlc(df, symbol)
+
+    def fetch(self, symbol: str, interval: str = '1d', period: str = 'max') -> pd.DataFrame:
+        errors = []
+        for method in (self._fetch_via_yfinance_download, self._fetch_via_yfinance_ticker, self._fetch_via_chart_api):
+            try:
+                return method(symbol, interval, period)
+            except Exception as e:
+                errors.append(f'{method.__name__}: {e}')
+        raise ValueError(f'No data returned for {symbol}. Attempts failed -> ' + ' | '.join(errors))
 
 
 @dataclass(slots=True)
@@ -327,4 +378,6 @@ def format_symbol_for_market(symbol: str, market: str) -> str:
     symbol = (symbol or '').strip().upper()
     if market == 'ihsg' and symbol and not symbol.endswith('.JK'):
         return f'{symbol}.JK'
+    if market == 'crypto' and symbol and '-' not in symbol:
+        return f'{symbol}-USD'
     return symbol
