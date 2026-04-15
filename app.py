@@ -426,6 +426,70 @@ def _build_engine(min_reversal_pct, atr_mult, max_pivots, top_n, candidate_lookb
     )
 
 
+def _candidate_pool(result):
+    pool = []
+    if result.best_candidate is not None:
+        pool.append(result.best_candidate)
+    for alt in result.alternate_candidates:
+        if alt is not None:
+            pool.append(alt)
+    uniq = []
+    seen = set()
+    for c in pool:
+        key = (c.pattern_type, c.direction, tuple(c.pivot_indices))
+        if key in seen:
+            continue
+        seen.add(key)
+        uniq.append(c)
+    return uniq
+
+
+def _anchored_candidate_score(candidate, anchor_direction=None, anchor_pattern=None):
+    score = float(candidate.score) * 0.75 + float(candidate.confidence) * 0.25
+    if anchor_direction is not None:
+        score += 0.10 if candidate.direction == anchor_direction else -0.08
+    if anchor_pattern is not None:
+        score += 0.04 if candidate.pattern_type == anchor_pattern else 0.0
+    if candidate.hard_rule_pass:
+        score += 0.03
+    if candidate.meta.get("recency_score") is not None:
+        score += 0.04 * float(candidate.meta.get("recency_score"))
+    if candidate.meta.get("anchor_aligned_promoted"):
+        score += 0.01
+    return score
+
+
+def _promote_anchor_aligned_candidates(results):
+    if not results:
+        return results
+    ordered = sorted(results, key=lambda r: {"1mo": 0, "1wk": 1, "1d": 2, "4h": 3, "1h": 4}.get(r.interval, 99))
+    anchor_direction = None
+    anchor_pattern = None
+    for result in ordered:
+        pool = _candidate_pool(result)
+        if not pool:
+            continue
+        current = result.best_candidate
+        if anchor_direction is None and current is not None:
+            anchor_direction = current.direction
+            anchor_pattern = current.pattern_type
+            continue
+        scored = sorted(pool, key=lambda c: _anchored_candidate_score(c, anchor_direction, anchor_pattern), reverse=True)
+        chosen = scored[0]
+        if current is None or chosen is not current:
+            chosen.meta["anchor_aligned_promoted"] = 1.0
+            result.best_candidate = chosen
+            result.alternate_candidates = [c for c in pool if c is not chosen][: max(0, len(result.alternate_candidates))]
+        if chosen is not None:
+            if anchor_direction is None:
+                anchor_direction = chosen.direction
+            elif chosen.direction == anchor_direction and chosen.confidence >= 0.45:
+                anchor_direction = chosen.direction
+            if anchor_pattern is None and chosen is not None:
+                anchor_pattern = chosen.pattern_type
+    return results
+
+
 st.title("Elliott Wave Miner Engine")
 st.caption(
     "Scanner + single-chart workflow with hierarchical multi-degree counting. Visual leans closer to analyst-style Elliott charts: clean candles, degree labels, invalidation, and target lines."
@@ -546,6 +610,7 @@ if run:
             st.error("No intervals could be analyzed. Check the symbol/provider format or try another period.")
             st.stop()
 
+        results = _promote_anchor_aligned_candidates(results)
         mtf = reconcile_results(results)
         degree_summary = build_degree_hierarchy(results)
         degree_results = {r.interval: r for r in results}
@@ -604,6 +669,7 @@ if run:
         st.plotly_chart(
             plot_reference_chart(data_map[base_interval], degree_results[base_interval], base_interval, lookback_bars=lookback_bars, degree_summary=degree_summary, degree_results=degree_results),
             use_container_width=True,
+            key=f"ref-{symbol}-{base_interval}-{len(results)}",
         )
 
         tabs = st.tabs([r.interval for r in results])
@@ -611,9 +677,12 @@ if run:
             with tab:
                 candidate = result.best_candidate
                 df = data_map[result.interval]
+                if candidate is not None and candidate.meta.get("anchor_aligned_promoted"):
+                    st.caption("Best count was upgraded from alternates because it aligns better with the higher-degree anchor.")
                 st.plotly_chart(
                     plot_reference_chart(df, result, result.interval, lookback_bars=lookback_bars, degree_summary=degree_summary, degree_results=degree_results),
                     use_container_width=True,
+                    key=f"tab-{symbol}-{result.interval}",
                 )
                 st.caption("Fetched data audit")
                 st.dataframe(_data_audit(df), use_container_width=True, hide_index=True)
@@ -738,6 +807,7 @@ if run:
             st.plotly_chart(
                 plot_reference_chart(preview_df, preview_result, scan_interval, lookback_bars=lookback_bars),
                 use_container_width=True,
+                key=f"preview-{preview_symbol}-{scan_interval}",
             )
             st.caption("Fetched data audit")
             st.dataframe(_data_audit(preview_df), use_container_width=True, hide_index=True)
