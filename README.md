@@ -33,3 +33,29 @@ Best-candidate metadata now includes:
 
 ## Important honesty note
 This is still not an honest claim of perfect Elliott labeling or exact Dynamic Traders proprietary replication. It is a more decision-useful open implementation that moves closer to actual trading workflow.
+
+
+## Main paths
+- Core engine: `src/elliott_miner_engine/engine.py`
+- Multi-timeframe reconciliation: `src/elliott_miner_engine/mtf.py`
+- CLI entry: `src/elliott_miner_engine/cli.py`
+- Streamlit app entry: `app.py`
+
+## Run with Streamlit
+From the project root:
+
+```bash
+streamlit run app.py
+```
+
+## What multi-timeframe reconciliation does
+The new reconciliation layer combines `1d`, `1wk`, and `1mo` outputs into a weighted consensus:
+- direction vote
+- pattern vote
+- alignment score
+- conflict score
+- consensus invalidation
+- consensus price target / zone
+- consensus time window
+
+This does **not** pretend there is one perfect count. It explicitly measures whether the lower and higher timeframes agree enough to trust the setup.
