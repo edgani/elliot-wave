@@ -42,6 +42,14 @@ class MarketScanner:
         rows = []
         for r in results:
             c = r.best_candidate
+            primary_time_low = None
+            primary_time_high = None
+            if c is not None and c.fib_time_targets:
+                top_time = sorted(c.fib_time_targets, key=lambda t: (-t.weight, t.projected_index))[:3]
+                pts = [t.projected_timestamp for t in top_time if t.projected_timestamp is not None]
+                if pts:
+                    primary_time_low = min(pts)
+                    primary_time_high = max(pts)
             rows.append(
                 {
                     'symbol': r.symbol,
@@ -53,6 +61,13 @@ class MarketScanner:
                     'score': None if c is None else c.score,
                     'confidence': None if c is None else c.confidence,
                     'invalidation': None if c is None else c.invalidation,
+                    'bars_since_last_pivot': None if c is None else c.meta.get('bars_since_last_pivot'),
+                    'recency_score': None if c is None else c.meta.get('recency_score'),
+                    'primary_price_target': None if c is None else c.meta.get('primary_price_target'),
+                    'primary_price_zone_low': None if c is None else c.meta.get('primary_price_zone_low'),
+                    'primary_price_zone_high': None if c is None else c.meta.get('primary_price_zone_high'),
+                    'primary_time_window_start': primary_time_low,
+                    'primary_time_window_end': primary_time_high,
                     'error': r.error,
                 }
             )

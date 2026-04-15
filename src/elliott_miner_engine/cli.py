@@ -42,11 +42,8 @@ def load_universe(market: str):
     if market == 'commodities':
         return ExchangeUniverseLoader.load_commodities_default()['symbol'].tolist()
     if market == 'crypto':
-        cg = CoinGeckoUniverseLoader.load()
-        # Yahoo covers major coins more consistently than the full CoinGecko universe.
-        # For fully exhaustive crypto scanning, replace with an exchange or CoinGecko OHLC adapter.
-        majors = ['BTC-USD', 'ETH-USD', 'SOL-USD', 'XRP-USD', 'BNB-USD', 'ADA-USD', 'DOGE-USD', 'TRX-USD', 'AVAX-USD', 'LINK-USD']
-        return majors
+        CoinGeckoUniverseLoader.load()
+        return ['BTC-USD', 'ETH-USD', 'SOL-USD', 'XRP-USD', 'BNB-USD', 'ADA-USD', 'DOGE-USD', 'TRX-USD', 'AVAX-USD', 'LINK-USD']
     raise ValueError(f'Unsupported market: {market}')
 
 
@@ -66,6 +63,7 @@ def main() -> None:
             'score': None if result.best_candidate is None else result.best_candidate.score,
             'confidence': None if result.best_candidate is None else result.best_candidate.confidence,
             'invalidation': None if result.best_candidate is None else result.best_candidate.invalidation,
+            'meta': {} if result.best_candidate is None else result.best_candidate.meta,
             'price_targets': [] if result.best_candidate is None else [asdict(t) for t in result.best_candidate.fib_price_targets],
             'time_targets': [] if result.best_candidate is None else [asdict(t) for t in result.best_candidate.fib_time_targets],
             'wave_duration_projections': [] if result.best_candidate is None else [asdict(t) for t in result.best_candidate.wave_duration_projections],

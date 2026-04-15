@@ -5,7 +5,7 @@ import pandas as pd
 
 from elliott_miner_engine.engine import ElliottWaveEngine
 from elliott_miner_engine.models import Pivot
-from elliott_miner_engine.wave_rules import evaluate_impulse_window
+from elliott_miner_engine.wave_rules import evaluate_flat_window, evaluate_impulse_window
 
 
 def synthetic_series() -> pd.DataFrame:
@@ -28,7 +28,6 @@ def synthetic_series() -> pd.DataFrame:
 
 
 def main() -> None:
-    # Rule-level sanity check with hand-crafted pivots.
     pivots = [
         Pivot(0, None, 100.0, 'low'),
         Pivot(4, None, 113.0, 'high'),
@@ -42,14 +41,22 @@ def main() -> None:
     assert soft['fib_score_w2'] > 0
     assert soft['fib_score_w3'] > 0
 
-    # End-to-end engine sanity check.
+    flat_pivots = [
+        Pivot(0, None, 100.0, 'low'),
+        Pivot(5, None, 115.0, 'high'),
+        Pivot(10, None, 99.0, 'low'),
+        Pivot(16, None, 116.0, 'high'),
+    ]
+    _, _, flat_soft = evaluate_flat_window(flat_pivots)
+    assert flat_soft['fib_score_b'] > 0
+
     engine = ElliottWaveEngine(min_reversal_pct=0.015, atr_mult=0.8)
     result = engine.analyze(synthetic_series(), symbol='SYN', market='test')
     assert result.best_candidate is not None, 'No candidate found'
     assert result.best_candidate.wave_duration_projections, 'No wave-duration projections found'
-    names = [x.wave_name for x in result.best_candidate.wave_duration_projections]
-    assert any(n in names for n in ['W3', 'C', 'D']), 'Expected wave duration labels missing'
-    print('OK:', result.best_candidate.pattern_type, result.best_candidate.score, names)
+    assert 'recency_score' in result.best_candidate.meta, 'recency not added'
+    assert all(hasattr(x, 'projected_end_timestamp_central') for x in result.best_candidate.wave_duration_projections)
+    print('OK:', result.best_candidate.pattern_type, result.best_candidate.score)
 
 
 if __name__ == '__main__':

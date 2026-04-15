@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Dict, List, Tuple
 
-from .fib import APP_PRIMARY, APP_SECONDARY, RET_EXTERNAL, RET_INTERNAL, app_ratio, closeness_to_set, external_retracement_ratio, retracement_ratio
+from .fib import app_ratio, closeness_to_set, external_retracement_ratio, retracement_ratio
 from .models import Pivot, RuleCheck
 
 
@@ -79,7 +79,6 @@ def evaluate_zigzag_window(pivots: List[Pivot]) -> Tuple[bool, List[RuleCheck], 
         raise ValueError('Zigzag window must have 4 pivots')
 
     direction = _direction_from_pivots(pivots)
-    # Here direction means final C direction; a bullish zigzag is upward C from low-high-low-high.
     prices = [p.price for p in pivots]
     kinds = [p.kind for p in pivots]
     if direction == 'bull':
@@ -110,6 +109,43 @@ def evaluate_zigzag_window(pivots: List[Pivot]) -> Tuple[bool, List[RuleCheck], 
     return hard_pass, checks, soft
 
 
+def evaluate_flat_window(pivots: List[Pivot]) -> Tuple[bool, List[RuleCheck], Dict[str, float]]:
+    if len(pivots) != 4:
+        raise ValueError('Flat window must have 4 pivots')
+    direction = _direction_from_pivots(pivots)
+    prices = [p.price for p in pivots]
+    kinds = [p.kind for p in pivots]
+    if direction == 'bull':
+        expected = ['low', 'high', 'low', 'high']
+        a = prices[1] - prices[0]
+        b = prices[1] - prices[2]
+        c = prices[3] - prices[2]
+        b_exceeds_a_origin = prices[2] <= prices[0]
+    else:
+        expected = ['high', 'low', 'high', 'low']
+        a = prices[0] - prices[1]
+        b = prices[2] - prices[1]
+        c = prices[2] - prices[3]
+        b_exceeds_a_origin = prices[2] >= prices[0]
+    r_b = retracement_ratio(prices[0], prices[1], prices[2])
+    r_c = app_ratio(prices[0], prices[1], prices[2], prices[3])
+    checks = [
+        RuleCheck('alternating pivot kinds', kinds == expected, f'expected={expected}, got={kinds}', 1.0),
+        RuleCheck('wave A positive', a > 0, f'a={a:.4f}', 1.5),
+        RuleCheck('wave B deep retrace', r_b >= 0.786, f'b_ret={r_b:.4f}', 1.5),
+        RuleCheck('wave C positive', c > 0, f'c={c:.4f}', 1.5),
+        RuleCheck('expanded/running flat behavior allowed', b_exceeds_a_origin or r_b >= 0.9, f'b_exceeds_a_origin={b_exceeds_a_origin}, b_ret={r_b:.4f}', 1.0),
+    ]
+    soft = {
+        'b_ret': r_b,
+        'c_app': r_c,
+        'fib_score_b': max(closeness_to_set(r_b, [0.786, 0.9, 1.0, 1.236], tol=0.25), 0.0),
+        'fib_score_c': closeness_to_set(r_c, [0.618, 1.0, 1.236, 1.618], tol=0.35),
+    }
+    hard_pass = all(c.passed for c in checks if c.weight >= 1.5)
+    return hard_pass, checks, soft
+
+
 def evaluate_triangle_window(pivots: List[Pivot]) -> Tuple[bool, List[RuleCheck], Dict[str, float]]:
     if len(pivots) != 6:
         raise ValueError('Triangle window must have 6 pivots')
@@ -127,5 +163,6 @@ def evaluate_triangle_window(pivots: List[Pivot]) -> Tuple[bool, List[RuleCheck]
         prev = abs(prices[i] - prices[i - 1])
         nxt = abs(prices[i + 1] - prices[i])
         retrs.append(nxt / prev if prev else 0.0)
-    soft = {'avg_leg_ret': sum(retrs) / len(retrs) if retrs else 0.0, 'fib_score': closeness_to_set(sum(retrs) / len(retrs), [0.618, 0.786], tol=0.22) if retrs else 0.0}
+    avg_ret = sum(retrs) / len(retrs) if retrs else 0.0
+    soft = {'avg_leg_ret': avg_ret, 'fib_score': closeness_to_set(avg_ret, [0.618, 0.786], tol=0.22) if retrs else 0.0}
     return hard_pass, checks, soft

@@ -3,8 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Dict, List, Literal, Optional
 
-PatternDirection = Literal['bull', 'bear']
-PatternType = Literal['impulse', 'zigzag', 'flat', 'triangle', 'ending_diagonal']
+PatternDirection = Literal["bull", "bear"]
+PatternType = Literal["impulse", "zigzag", "flat", "triangle", "ending_diagonal"]
 
 
 @dataclass(slots=True)
@@ -12,7 +12,7 @@ class Pivot:
     idx: int
     ts: object
     price: float
-    kind: Literal['low', 'high']
+    kind: Literal["low", "high"]
 
 
 @dataclass(slots=True)
@@ -28,7 +28,9 @@ class TimeTarget:
     bars_from_anchor: int
     anchor_index: int
     projected_index: int
-    weight: float
+    anchor_timestamp: Optional[object] = None
+    projected_timestamp: Optional[object] = None
+    weight: float = 1.0
 
 
 @dataclass(slots=True)
@@ -45,9 +47,15 @@ class WaveDurationProjection:
     projected_end_index_central: Optional[int]
     projected_end_index_low: Optional[int]
     projected_end_index_high: Optional[int]
-    fit_score: Optional[float]
-    basis: str
-    status: str
+    projected_end_timestamp_central: Optional[object] = None
+    projected_end_timestamp_low: Optional[object] = None
+    projected_end_timestamp_high: Optional[object] = None
+    remaining_bars_central: Optional[int] = None
+    remaining_bars_low: Optional[int] = None
+    remaining_bars_high: Optional[int] = None
+    fit_score: Optional[float] = None
+    basis: str = ""
+    status: str = "completed"
 
 
 @dataclass(slots=True)

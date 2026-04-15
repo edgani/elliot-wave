@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from typing import Iterable, List
+from typing import Iterable, List, Optional
 
 from .models import PriceTarget, TimeTarget
+from .timing import project_index_to_timestamp
 
 PHI = 1.618033988749895
 
@@ -57,13 +58,22 @@ def build_price_targets(names: List[str], values: List[float], weights: List[flo
     return [PriceTarget(name=n, value=v, weight=w) for n, v, w in zip(names, values, weights)]
 
 
-def build_time_targets(names: List[str], anchor_index: int, projected_indices: List[int], weights: List[float]) -> List[TimeTarget]:
+def build_time_targets(
+    names: List[str],
+    anchor_index: int,
+    projected_indices: List[int],
+    weights: List[float],
+    index: Optional[object] = None,
+) -> List[TimeTarget]:
+    anchor_ts = project_index_to_timestamp(index, anchor_index) if index is not None else None
     return [
         TimeTarget(
             name=n,
             bars_from_anchor=max(0, p - anchor_index),
             anchor_index=anchor_index,
             projected_index=p,
+            anchor_timestamp=anchor_ts,
+            projected_timestamp=project_index_to_timestamp(index, p) if index is not None else None,
             weight=w,
         )
         for n, p, w in zip(names, projected_indices, weights)
