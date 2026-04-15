@@ -1,11 +1,10 @@
+
 from __future__ import annotations
 
 import io
-import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Tuple
-from urllib.error import HTTPError, URLError
+from typing import List, Optional
 from urllib.parse import quote
 from urllib.request import Request, urlopen
 
@@ -36,7 +35,19 @@ class YahooMarketData:
             df.columns = df.columns.get_level_values(0)
         if df.empty:
             raise ValueError(f'No data returned for {symbol}')
-        return df[['Open', 'High', 'Low', 'Close', 'Volume']].dropna(subset=['Open', 'High', 'Low', 'Close'])
+        rename_map = {c: str(c).title() for c in df.columns}
+        df = df.rename(columns=rename_map)
+        for col in ['Open', 'High', 'Low', 'Close', 'Volume']:
+            if col not in df.columns:
+                if col == 'Volume':
+                    df[col] = 0.0
+                else:
+                    raise ValueError(f'Missing required column {col} for {symbol}')
+        df = df[['Open', 'High', 'Low', 'Close', 'Volume']].copy()
+        df = df.dropna(subset=['Open', 'High', 'Low', 'Close'])
+        if df.empty:
+            raise ValueError(f'No valid OHLC rows returned for {symbol}')
+        return df
 
 
 @dataclass(slots=True)
@@ -54,7 +65,6 @@ class ExchangeUniverseLoader:
     NASDAQ_LISTED_URL = 'https://www.nasdaqtrader.com/dynamic/symdir/nasdaqlisted.txt'
     OTHER_LISTED_URL = 'https://www.nasdaqtrader.com/dynamic/symdir/otherlisted.txt'
 
-    # Fallback snapshot repository. Not authoritative, but useful when IDX blocks bots.
     IDX_GITHUB_SECTOR_CSVS = [
         'Basic Materials.csv',
         'Consumer Cyclicals.csv',
@@ -98,8 +108,7 @@ class ExchangeUniverseLoader:
         name_col = next((c for c in df.columns if 'Company' in str(c) or 'Perusahaan' in str(c) or 'Name' in str(c)), df.columns[1])
         out = pd.DataFrame(
             {
-                'symbol': df[code_col].astype(str).str.strip().str.upper() + '.JK',
-                'raw_symbol': df[code_col].astype(str).str.strip().str.upper(),
+                'symbol': df[code_col].astype(str).str.strip().str.upper().str.replace('.JK', '', regex=False) + '.JK',
                 'name': df[name_col].astype(str).str.strip(),
             }
         )
@@ -109,24 +118,20 @@ class ExchangeUniverseLoader:
     def load_idx_github_snapshot(cls) -> pd.DataFrame:
         frames: List[pd.DataFrame] = []
         for filename in cls.IDX_GITHUB_SECTOR_CSVS:
-            url = cls.IDX_GITHUB_RAW_TEMPLATE.format(filename=quote(filename))
             try:
+                url = cls.IDX_GITHUB_RAW_TEMPLATE.format(filename=quote(filename))
                 df = cls._read_csv_url(url)
             except Exception:
                 continue
-            cols = {c.lower(): c for c in df.columns}
+            cols = {str(c).lower(): c for c in df.columns}
             code_col = cols.get('code') or cols.get('ticker') or cols.get('symbol')
             name_col = cols.get('nama') or cols.get('name') or cols.get('company') or cols.get('emiten')
             if code_col is None:
                 continue
-            if name_col is None:
-                name_series = df[code_col].astype(str)
-            else:
-                name_series = df[name_col].astype(str)
+            name_series = df[name_col].astype(str) if name_col else df[code_col].astype(str)
             tmp = pd.DataFrame(
                 {
                     'symbol': df[code_col].astype(str).str.strip().str.upper().str.replace('.JK', '', regex=False) + '.JK',
-                    'raw_symbol': df[code_col].astype(str).str.strip().str.upper().str.replace('.JK', '', regex=False),
                     'name': name_series.str.strip(),
                 }
             )
@@ -204,7 +209,7 @@ class CoinGeckoUniverseLoader:
             raw = resp.read().decode('utf-8', errors='ignore')
         df = pd.read_json(io.StringIO(raw))
         out = df.rename(columns={'id': 'cg_id', 'symbol': 'symbol', 'name': 'name'})
-        out['symbol'] = out['symbol'].str.upper()
+        out['symbol'] = out['symbol'].astype(str).str.upper()
         return out[['cg_id', 'symbol', 'name']]
 
     @staticmethod
@@ -220,7 +225,7 @@ class CoinGeckoUniverseLoader:
         return pd.DataFrame(rows, columns=['symbol', 'name'])
 
 
-def _safe_universe(df: pd.DataFrame, cols: List[str]) -> pd.DataFrame:
+def _safe_universe(df: Optional[pd.DataFrame], cols: List[str]) -> pd.DataFrame:
     if df is None or df.empty:
         return pd.DataFrame(columns=cols)
     out = df.copy()
@@ -235,68 +240,85 @@ def _safe_universe(df: pd.DataFrame, cols: List[str]) -> pd.DataFrame:
     return out.reset_index(drop=True)
 
 
-def load_market_universe_safe(market: str, *, us_common_only: bool = False, allow_unverified_third_party: bool = False) -> UniverseLoadResult:
+def _merge_universes(*frames: pd.DataFrame) -> pd.DataFrame:
+    clean = [_safe_universe(df, ['symbol', 'name']) for df in frames if df is not None and not df.empty]
+    if not clean:
+        return pd.DataFrame(columns=['symbol', 'name'])
+    out = pd.concat(clean, ignore_index=True).drop_duplicates('symbol', keep='first')
+    return out.sort_values('symbol').reset_index(drop=True)
+
+
+def load_market_universe_safe(
+    market: str,
+    *,
+    us_common_only: bool = False,
+    allow_unverified_third_party: bool = False,
+) -> UniverseLoadResult:
     notes: List[str] = []
     market = market.strip().lower()
 
     if market == 'ihsg':
+        local_fallback = _safe_universe(ExchangeUniverseLoader._read_local_csv('ihsg_fallback.csv'), ['symbol', 'name'])
         try:
             df = _safe_universe(ExchangeUniverseLoader.load_idx(), ['symbol', 'name'])
             notes.append('Loaded live official IDX stock list.')
+            if not local_fallback.empty:
+                df = _merge_universes(df, local_fallback)
+                notes.append('Merged bundled emergency fallback names into live IDX universe to reduce hosted-source edge cases.')
             return UniverseLoadResult(market, df, 'IDX official stock list', True, True, notes)
         except Exception as e:
             notes.append(f'Official IDX live load failed: {e}')
+
         if allow_unverified_third_party:
             try:
                 df = _safe_universe(ExchangeUniverseLoader.load_idx_github_snapshot(), ['symbol', 'name'])
-                notes.append('Loaded third-party GitHub mirror snapshot because official IDX blocked the request.')
-                notes.append('Treat this as convenience only, not authoritative. It may lag current listings or names.')
-                return UniverseLoadResult(market, df, 'third-party GitHub mirror snapshot', True, False, notes)
+                df = _merge_universes(df, local_fallback)
+                notes.append('Used unverified third-party GitHub snapshot because official IDX blocked or failed.')
+                notes.append('Merged local fallback names to reduce missing-symbol issues such as newly checked symbols.')
+                return UniverseLoadResult(market, df, 'unverified third-party IHSG snapshot + local fallback', False, False, notes)
             except Exception as e:
-                notes.append(f'Third-party GitHub fallback failed: {e}')
-        else:
-            notes.append('Third-party IDX fallback is disabled by default to avoid silently showing stale listings.')
-        df = _safe_universe(ExchangeUniverseLoader._read_local_csv('ihsg_fallback.csv'), ['symbol', 'name'])
-        notes.append('Using bundled local fallback watchlist only. This is not the full IDX universe. Manual symbol entry is still supported.')
-        return UniverseLoadResult(market, df, 'bundled local fallback watchlist', False, False, notes)
+                notes.append(f'Unverified third-party IHSG snapshot failed: {e}')
+
+        notes.append('Using bundled local fallback watchlist only. Manual ticker entry still works.')
+        return UniverseLoadResult(market, local_fallback, 'bundled local fallback watchlist', False, False, notes)
 
     if market == 'us_stocks':
         try:
             df = _safe_universe(ExchangeUniverseLoader.load_us_equities(common_only=us_common_only), ['symbol', 'name'])
-            notes.append('Loaded live official Nasdaq Trader symbol directory.')
+            notes.append('Loaded Nasdaq Trader symbol directory.')
             if us_common_only:
-                notes.append('Applied common-only filter to remove many suffix-heavy or special-share lines.')
+                notes.append('Applied common-only filter, so the list is intentionally not exhaustive.')
                 complete = False
             else:
                 complete = True
             return UniverseLoadResult(market, df, 'Nasdaq Trader symbol directory', True, complete, notes)
         except Exception as e:
             notes.append(f'Official US symbol directory load failed: {e}')
-        df = _safe_universe(ExchangeUniverseLoader._read_local_csv('us_fallback.csv'), ['symbol', 'name'])
-        notes.append('Using bundled local fallback sample only.')
-        return UniverseLoadResult(market, df, 'bundled local fallback sample', False, False, notes)
+            df = _safe_universe(ExchangeUniverseLoader._read_local_csv('us_fallback.csv'), ['symbol', 'name'])
+            notes.append('Using bundled local fallback sample only.')
+            return UniverseLoadResult(market, df, 'bundled local fallback sample', False, False, notes)
 
     if market == 'forex':
         df = _safe_universe(ExchangeUniverseLoader.load_forex_default(), ['symbol', 'name'])
-        notes.append('Forex list is a curated major/minor/emerging set, not a complete global provider master list.')
+        notes.append('Forex list is a curated Yahoo-compatible major/minor/EM set, not a complete global provider master list.')
         return UniverseLoadResult(market, df, 'curated Yahoo-compatible forex list', False, False, notes)
 
     if market == 'commodities':
         df = _safe_universe(ExchangeUniverseLoader.load_commodities_default(), ['symbol', 'name'])
-        notes.append('Commodities list is a curated futures core set, not a complete global commodity universe.')
+        notes.append('Commodities list is a curated Yahoo-compatible futures core set, not a complete global commodity master list.')
         return UniverseLoadResult(market, df, 'curated Yahoo-compatible commodity futures list', False, False, notes)
 
     if market == 'crypto':
         try:
             df = _safe_universe(CoinGeckoUniverseLoader.load(), ['symbol', 'name'])
-            notes.append('Loaded live CoinGecko coin list for discovery/universe browsing.')
-            notes.append('Analysis still uses the symbol you type. For best stability on Yahoo, use symbols like BTC-USD or ETH-USD.')
+            notes.append('Loaded live CoinGecko coin list for universe browsing.')
+            notes.append('Analysis still uses the symbol you type. For Yahoo stability, use tickers like BTC-USD or ETH-USD.')
             return UniverseLoadResult(market, df, 'CoinGecko coins list', True, True, notes)
         except Exception as e:
             notes.append(f'Live CoinGecko coin list failed: {e}')
-        df = _safe_universe(CoinGeckoUniverseLoader.load_yahoo_stable_fallback(), ['symbol', 'name'])
-        notes.append('Using bundled Yahoo-stable crypto sample list only.')
-        return UniverseLoadResult(market, df, 'bundled Yahoo-stable crypto sample', False, False, notes)
+            df = _safe_universe(CoinGeckoUniverseLoader.load_yahoo_stable_fallback(), ['symbol', 'name'])
+            notes.append('Using bundled Yahoo-stable crypto sample only.')
+            return UniverseLoadResult(market, df, 'bundled Yahoo-stable crypto sample', False, False, notes)
 
     return UniverseLoadResult(market, pd.DataFrame(columns=['symbol', 'name']), 'unknown', False, False, ['Unknown market'])
 
