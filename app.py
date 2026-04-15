@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import List, Optional
 
@@ -78,6 +79,131 @@ def scan_universe_cached(
     scanner = MarketScanner(engine=engine, data=YahooMarketData(), max_workers=max_workers)
     results = scanner.scan_symbols(list(symbols), market=market, interval=interval, period=period, limit=None)
     return scanner.to_frame(results)
+
+
+@st.cache_data(show_spinner=False)
+def scan_universe_mtf_cached(
+    symbols: tuple[str, ...],
+    market: str,
+    intervals: tuple[str, ...],
+    period: str,
+    min_reversal_pct: float,
+    atr_mult: float,
+    max_pivots: int,
+    top_n: int,
+    candidate_lookback_pivots: int,
+    max_workers: int,
+) -> pd.DataFrame:
+    engine = ElliottWaveEngine(
+        min_reversal_pct=min_reversal_pct,
+        atr_mult=atr_mult,
+        max_pivots=max_pivots,
+        top_n=top_n,
+        candidate_lookback_pivots=candidate_lookback_pivots,
+    )
+    data = YahooMarketData()
+    intervals = tuple(intervals)
+
+    def job(symbol: str) -> dict:
+        results = []
+        errors = []
+        last_close = float('nan')
+        for interval in intervals:
+            try:
+                df = data.fetch(symbol, interval=interval, period=period)
+                if not df.empty:
+                    last_close = float(df['Close'].iloc[-1])
+                results.append(engine.analyze(df, symbol=symbol, market=market, interval=interval))
+            except Exception as e:
+                errors.append(f'{interval}: {e}')
+        if not results:
+            return {
+                'symbol': symbol,
+                'market': market,
+                'intervals': ', '.join(intervals),
+                'last_close': last_close,
+                'consensus_direction': None,
+                'consensus_pattern': None,
+                'state': 'failed',
+                'alignment_score': None,
+                'confidence_score': None,
+                'conflict_score': None,
+                'hierarchy_state': None,
+                'inherited_alignment_score': None,
+                'avg_structure_quality': None,
+                'avg_stability_score': None,
+                'best_score': None,
+                'best_confidence': None,
+                'intervals_ok': 0,
+                'intervals_requested': len(intervals),
+                'invalidation': None,
+                'target_price': None,
+                'target_zone_low': None,
+                'target_zone_high': None,
+                'target_time_window_start': None,
+                'target_time_window_end': None,
+                'composite_rank': None,
+                'error': ' | '.join(errors) or 'No intervals succeeded',
+            }
+        results = _promote_anchor_aligned_candidates(results)
+        mtf = reconcile_results(results)
+        hierarchy = build_degree_hierarchy(results)
+        cands = [r.best_candidate for r in results if r.best_candidate is not None]
+        structure_vals = [float(c.meta.get('structure_quality')) for c in cands if c.meta.get('structure_quality') is not None]
+        stability_vals = [float(c.meta.get('stability_score')) for c in cands if c.meta.get('stability_score') is not None]
+        best_score = max((float(c.score) for c in cands), default=0.0)
+        best_confidence = max((float(c.confidence) for c in cands), default=0.0)
+        avg_structure = sum(structure_vals) / len(structure_vals) if structure_vals else 0.0
+        avg_stability = sum(stability_vals) / len(stability_vals) if stability_vals else 0.0
+        coverage = len(results) / max(len(intervals), 1)
+        composite_rank = (
+            0.24 * float(mtf.alignment_score)
+            + 0.18 * float(mtf.confidence_score)
+            + 0.14 * float(1.0 - mtf.conflict_score)
+            + 0.14 * float(hierarchy.inherited_alignment_score)
+            + 0.12 * avg_structure
+            + 0.08 * avg_stability
+            + 0.06 * best_score
+            + 0.04 * best_confidence
+        ) * coverage
+        return {
+            'symbol': symbol,
+            'market': market,
+            'intervals': ', '.join(intervals),
+            'last_close': last_close,
+            'consensus_direction': mtf.consensus_direction,
+            'consensus_pattern': mtf.consensus_pattern,
+            'state': mtf.state,
+            'alignment_score': mtf.alignment_score,
+            'confidence_score': mtf.confidence_score,
+            'conflict_score': mtf.conflict_score,
+            'hierarchy_state': hierarchy.state,
+            'inherited_alignment_score': hierarchy.inherited_alignment_score,
+            'avg_structure_quality': avg_structure,
+            'avg_stability_score': avg_stability,
+            'best_score': best_score,
+            'best_confidence': best_confidence,
+            'intervals_ok': len(results),
+            'intervals_requested': len(intervals),
+            'invalidation': mtf.invalidation,
+            'target_price': mtf.target_price,
+            'target_zone_low': mtf.target_zone_low,
+            'target_zone_high': mtf.target_zone_high,
+            'target_time_window_start': mtf.target_time_window_start,
+            'target_time_window_end': mtf.target_time_window_end,
+            'composite_rank': composite_rank,
+            'error': ' | '.join(errors) if errors else None,
+        }
+
+    rows = []
+    with ThreadPoolExecutor(max_workers=max_workers) as ex:
+        futures = {ex.submit(job, s): s for s in symbols}
+        for fut in as_completed(futures):
+            rows.append(fut.result())
+    out = pd.DataFrame(rows)
+    if not out.empty and 'composite_rank' in out.columns:
+        out = out.sort_values(['composite_rank', 'alignment_score', 'best_score'], ascending=[False, False, False], na_position='last')
+    return out.reset_index(drop=True)
 
 
 
@@ -247,6 +373,19 @@ def _label_points(candidate, degree: str = "minor"):
             labels = ["a", "b", "c"]
             color = "#ff3b7f"
         for idx, price, label in zip(idxs[1:4], prices[1:4], labels):
+            out.append((idx, price, label, color))
+    elif candidate.pattern_type == "double_zigzag" and len(idxs) >= 6:
+        base = ["W", "X", "Y", "X", "Z"]
+        if degree == "primary":
+            labels = [f"({x})" for x in base]
+            color = "#2d66ff"
+        elif degree == "intermediate":
+            labels = base
+            color = "#ff3b7f"
+        else:
+            labels = ["w", "x", "y", "x", "z"]
+            color = "#ff3b7f"
+        for idx, price, label in zip(idxs[1:6], prices[1:6], labels):
             out.append((idx, price, label, color))
     elif candidate.pattern_type == "triangle" and len(idxs) >= 6:
         base = ["A", "B", "C", "D", "E"]
@@ -492,7 +631,7 @@ def _promote_anchor_aligned_candidates(results):
 
 st.title("Elliott Wave Miner Engine")
 st.caption(
-    "Scanner + single-chart workflow with hierarchical multi-degree counting. Visual leans closer to analyst-style Elliott charts: clean candles, degree labels, invalidation, and target lines."
+    "Scanner + single-chart workflow with hierarchical multi-degree counting, stability diagnostics, and MTF consensus ranking. Visual leans closer to analyst-style Elliott charts: clean candles, degree labels, invalidation, and target lines."
 )
 
 with st.sidebar:
@@ -561,7 +700,7 @@ with st.sidebar:
         period = st.selectbox("Period", ["2y", "5y", "10y", "max"], index=2)
         lookback_bars = st.slider("Chart lookback bars", 80, 600, 250, 10)
     else:
-        scan_interval = st.selectbox("Scanner interval", ["1d", "1wk", "1mo"], index=0)
+        scan_intervals = st.multiselect("Scanner intervals", ["1d", "1wk", "1mo"], default=["1d", "1wk", "1mo"])
         period = st.selectbox("Scanner period", ["2y", "5y", "10y", "max"], index=2)
         lookback_bars = st.slider("Preview chart lookback bars", 80, 600, 220, 10)
         scan_max_workers = st.slider("Scanner max workers", 2, 32, 8, 1)
@@ -695,6 +834,7 @@ if run:
                 a.metric("Pattern", candidate.pattern_type)
                 b.metric("Direction", candidate.direction)
                 c.metric("Score / Confidence", f"{candidate.score:.2f} / {candidate.confidence:.2f}")
+                st.caption(f"Subtype: {candidate.meta.get('subtype', 'n/a')} | Stability: {candidate.meta.get('stability_score', float('nan')) if candidate.meta.get('stability_score') is not None else 'n/a'} | Survival: {candidate.meta.get('stability_survival_ratio', float('nan')) if candidate.meta.get('stability_survival_ratio') is not None else 'n/a'}")
 
                 d, e, f = st.columns(3)
                 d.metric("Invalidation", "-" if candidate.invalidation is None else f"{candidate.invalidation:,.4f}")
@@ -724,8 +864,10 @@ if run:
                         {
                             "pattern": alt.pattern_type,
                             "direction": alt.direction,
+                            "subtype": alt.meta.get('subtype'),
                             "score": alt.score,
                             "confidence": alt.confidence,
+                            "stability": alt.meta.get('stability_score'),
                             "invalidation": alt.invalidation,
                             "primary_price_target": alt.meta.get("primary_price_target"),
                         }
@@ -738,54 +880,79 @@ if run:
         if filtered_universe.empty:
             st.error("Universe is empty. Upload a CSV/XLSX or change the filters/source.")
             st.stop()
+        if not scan_intervals:
+            st.error("Pick at least one scanner interval.")
+            st.stop()
         scan_symbols = tuple(
             format_symbol_for_market(s, market)
             for s in filtered_universe["symbol"].astype(str).head(int(scan_limit)).tolist()
         )
         with st.spinner(f"Scanning {len(scan_symbols):,} symbols..."):
-            scan_df = scan_universe_cached(
-                scan_symbols,
-                market,
-                scan_interval,
-                period,
-                min_reversal_pct,
-                atr_mult,
-                max_pivots,
-                top_n,
-                candidate_lookback_pivots,
-                scan_max_workers,
-            )
+            if len(scan_intervals) == 1:
+                scan_df = scan_universe_cached(
+                    scan_symbols,
+                    market,
+                    scan_intervals[0],
+                    period,
+                    min_reversal_pct,
+                    atr_mult,
+                    max_pivots,
+                    top_n,
+                    candidate_lookback_pivots,
+                    scan_max_workers,
+                )
+            else:
+                scan_df = scan_universe_mtf_cached(
+                    scan_symbols,
+                    market,
+                    tuple(scan_intervals),
+                    period,
+                    min_reversal_pct,
+                    atr_mult,
+                    max_pivots,
+                    top_n,
+                    candidate_lookback_pivots,
+                    scan_max_workers,
+                )
 
         if scan_df.empty:
             st.error("No scan output returned.")
             st.stop()
 
         ranked = scan_df[scan_df["error"].isna()].copy()
-        ranked = ranked.sort_values(["score", "confidence"], ascending=[False, False])
         errors = scan_df[scan_df["error"].notna()].copy()
+        if len(scan_intervals) == 1:
+            ranked = ranked.sort_values(["score", "confidence"], ascending=[False, False])
+        else:
+            ranked = ranked.sort_values(["composite_rank", "alignment_score", "best_score"], ascending=[False, False, False])
 
         s1, s2, s3, s4 = st.columns(4)
         s1.metric("Scanned symbols", f"{len(scan_df):,}")
         s2.metric("Valid candidates", f"{len(ranked):,}")
         s3.metric("Failed fetch/analyze", f"{len(errors):,}")
-        s4.metric("Top score", "-" if ranked.empty else f"{ranked['score'].iloc[0]:.2f}")
+        if len(scan_intervals) == 1:
+            s4.metric("Top score", "-" if ranked.empty else f"{ranked['score'].iloc[0]:.2f}")
+        else:
+            s4.metric("Top composite rank", "-" if ranked.empty else f"{ranked['composite_rank'].iloc[0]:.2f}")
 
         st.subheader("Scanner ranking")
-        display_cols = [
-            "symbol",
-            "pattern",
-            "direction",
-            "score",
-            "confidence",
-            "invalidation",
-            "primary_price_target",
-            "primary_price_zone_low",
-            "primary_price_zone_high",
-            "primary_time_window_start",
-            "primary_time_window_end",
-            "bars_since_last_pivot",
-            "recency_score",
-        ]
+        if len(scan_intervals) == 1:
+            display_cols = [
+                "symbol", "pattern", "direction", "subtype", "score", "confidence",
+                "stability_score", "invalidation", "primary_price_target",
+                "primary_price_zone_low", "primary_price_zone_high",
+                "primary_time_window_start", "primary_time_window_end",
+                "bars_since_last_pivot", "recency_score",
+            ]
+        else:
+            display_cols = [
+                "symbol", "consensus_direction", "consensus_pattern", "state", "hierarchy_state",
+                "composite_rank", "alignment_score", "confidence_score", "conflict_score",
+                "inherited_alignment_score", "avg_structure_quality", "avg_stability_score",
+                "best_score", "best_confidence", "intervals_ok", "intervals_requested",
+                "invalidation", "target_price", "target_zone_low", "target_zone_high",
+                "target_time_window_start", "target_time_window_end",
+            ]
         st.dataframe(ranked[display_cols], use_container_width=True, hide_index=True)
 
         if not errors.empty:
@@ -800,17 +967,50 @@ if run:
         ) if not ranked.empty else preview_default
 
         try:
-            preview_df = fetch_data(preview_symbol, scan_interval, period)
             engine = _build_engine(min_reversal_pct, atr_mult, max_pivots, top_n, candidate_lookback_pivots)
-            preview_result = engine.analyze(preview_df, symbol=preview_symbol, market=market, interval=scan_interval)
-            st.subheader(f"Preview: {preview_symbol}")
-            st.plotly_chart(
-                plot_reference_chart(preview_df, preview_result, scan_interval, lookback_bars=lookback_bars),
-                use_container_width=True,
-                key=f"preview-{preview_symbol}-{scan_interval}",
-            )
-            st.caption("Fetched data audit")
-            st.dataframe(_data_audit(preview_df), use_container_width=True, hide_index=True)
+            if len(scan_intervals) == 1:
+                preview_interval = scan_intervals[0]
+                preview_df = fetch_data(preview_symbol, preview_interval, period)
+                preview_result = engine.analyze(preview_df, symbol=preview_symbol, market=market, interval=preview_interval)
+                st.subheader(f"Preview: {preview_symbol}")
+                st.plotly_chart(
+                    plot_reference_chart(preview_df, preview_result, preview_interval, lookback_bars=lookback_bars),
+                    use_container_width=True,
+                    key=f"preview-{preview_symbol}-{preview_interval}",
+                )
+                st.caption("Fetched data audit")
+                st.dataframe(_data_audit(preview_df), use_container_width=True, hide_index=True)
+            else:
+                preview_results = []
+                preview_map = {}
+                fetch_errors = []
+                for preview_interval in scan_intervals:
+                    try:
+                        df = fetch_data(preview_symbol, preview_interval, period)
+                        preview_map[preview_interval] = df
+                        preview_results.append(engine.analyze(df, symbol=preview_symbol, market=market, interval=preview_interval))
+                    except Exception as e:
+                        fetch_errors.append(f"{preview_interval}: {e}")
+                if fetch_errors:
+                    st.warning("Preview interval issues: " + " | ".join(fetch_errors))
+                if preview_results:
+                    preview_results = _promote_anchor_aligned_candidates(preview_results)
+                    preview_mtf = reconcile_results(preview_results)
+                    preview_hierarchy = build_degree_hierarchy(preview_results)
+                    st.subheader(f"Preview MTF: {preview_symbol}")
+                    p1, p2, p3, p4 = st.columns(4)
+                    p1.metric("Consensus direction", preview_mtf.consensus_direction or "n/a")
+                    p2.metric("Consensus pattern", preview_mtf.consensus_pattern or "n/a")
+                    p3.metric("Alignment", f"{preview_mtf.alignment_score:.2f}")
+                    p4.metric("Hierarchy", preview_hierarchy.state)
+                    base_interval = "1d" if "1d" in preview_map else preview_results[0].interval
+                    st.plotly_chart(
+                        plot_reference_chart(preview_map[base_interval], {r.interval: r for r in preview_results}[base_interval], base_interval, lookback_bars=lookback_bars, degree_summary=preview_hierarchy, degree_results={r.interval: r for r in preview_results}),
+                        use_container_width=True,
+                        key=f"preview-mtf-{preview_symbol}-{base_interval}",
+                    )
+                    st.caption("Fetched data audit")
+                    st.dataframe(_data_audit(preview_map[base_interval]), use_container_width=True, hide_index=True)
         except Exception as e:
             st.warning(f"Preview fetch/analyze failed for {preview_symbol}: {e}")
 else:

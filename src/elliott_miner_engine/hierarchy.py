@@ -82,7 +82,10 @@ def _label_set(candidate: Optional[WaveCandidate], degree: str) -> List[str]:
         if degree == "intermediate":
             return base
         return _ROMAN_5
-    base = ["A", "B", "C"] if candidate.pattern_type in {"zigzag", "flat"} else ["A", "B", "C", "D", "E"]
+    if candidate.pattern_type == "double_zigzag":
+        base = ["W", "X", "Y", "X2", "Z"]
+    else:
+        base = ["A", "B", "C"] if candidate.pattern_type in {"zigzag", "flat"} else ["A", "B", "C", "D", "E"]
     if degree == "primary":
         return [f"({x})" for x in base]
     if degree == "intermediate":

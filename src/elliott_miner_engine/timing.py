@@ -255,3 +255,62 @@ def triangle_wave_duration_projections(pivots: List[Pivot], index: Optional[Iter
             )
         )
     return out
+
+
+def double_zigzag_duration_projections(pivots: List[Pivot], index: Optional[Iterable[object]] = None) -> List[WaveDurationProjection]:
+    if len(pivots) != 6:
+        return []
+    names = ['W', 'X', 'Y', 'X2', 'Z']
+    out: List[WaveDurationProjection] = []
+    seed = max(1, pivots[1].idx - pivots[0].idx)
+    out.append(
+        WaveDurationProjection(
+            wave_name='W',
+            start_index=pivots[0].idx,
+            end_index=pivots[1].idx,
+            start_timestamp=pivots[0].ts,
+            end_timestamp=pivots[1].ts,
+            actual_bars=seed,
+            projected_bars_central=None,
+            projected_bars_low=None,
+            projected_bars_high=None,
+            projected_end_index_central=None,
+            projected_end_index_low=None,
+            projected_end_index_high=None,
+            projected_end_timestamp_central=None,
+            projected_end_timestamp_low=None,
+            projected_end_timestamp_high=None,
+            remaining_bars_central=None,
+            remaining_bars_low=None,
+            remaining_bars_high=None,
+            fit_score=None,
+            basis='Seed complex-correction leg. No same-pattern causal prior leg is available for a clean duration projection.',
+            status='completed_seed',
+        )
+    )
+    out.append(
+        _make_projection(
+            'X', pivots[1], pivots[2], _projected_lengths(seed, TIME_SET_CORRECTIVE), [0.6, 1.0, 0.8, 0.5],
+            'Projected from W duration using corrective time ratios 0.382/0.618/1.0/1.618 of W.', index=index,
+        )
+    )
+    out.append(
+        _make_projection(
+            'Y', pivots[2], pivots[3], _projected_lengths(seed, TIME_SET_EXTENDED), [0.6, 0.9, 1.0, 0.7],
+            'Projected from W duration using motive-like time ratios 0.618/1.0/1.618/2.618 of W.', index=index,
+        )
+    )
+    d_y = max(1, pivots[3].idx - pivots[2].idx)
+    out.append(
+        _make_projection(
+            'X2', pivots[3], pivots[4], _projected_lengths(d_y, TIME_SET_CORRECTIVE), [0.6, 1.0, 0.8, 0.5],
+            'Projected from Y duration using corrective time ratios 0.382/0.618/1.0/1.618 of Y.', index=index,
+        )
+    )
+    out.append(
+        _make_projection(
+            'Z', pivots[4], pivots[5], _projected_lengths(seed, TIME_SET_EXTENDED), [0.6, 0.9, 1.0, 0.7],
+            'Projected from W duration using motive-like time ratios 0.618/1.0/1.618/2.618 of W.', index=index,
+        )
+    )
+    return out

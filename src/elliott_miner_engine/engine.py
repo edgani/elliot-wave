@@ -10,8 +10,14 @@ from .fib import build_price_targets, build_time_targets, price_projection, time
 from .models import Pivot, RuleCheck, ScanResult, WaveCandidate
 from .momentum import add_core_indicators, wave_momentum_strength
 from .pivots import adaptive_zigzag
-from .timing import impulse_wave_duration_projections, triangle_wave_duration_projections, zigzag_wave_duration_projections
-from .wave_rules import evaluate_flat_window, evaluate_impulse_window, evaluate_triangle_window, evaluate_zigzag_window
+from .timing import double_zigzag_duration_projections, impulse_wave_duration_projections, triangle_wave_duration_projections, zigzag_wave_duration_projections
+from .wave_rules import (
+    evaluate_double_zigzag_window,
+    evaluate_flat_window,
+    evaluate_impulse_window,
+    evaluate_triangle_window,
+    evaluate_zigzag_window,
+)
 
 
 @dataclass(slots=True)
@@ -23,18 +29,22 @@ class ElliottWaveEngine:
     allow_triangle: bool = True
     allow_ending_diagonal: bool = True
     allow_flat: bool = True
+    allow_double_zigzag: bool = True
     candidate_lookback_pivots: int = 25
     recency_halflife_bars: int = 20
+    enable_stability_filter: bool = True
+    stability_trials: int = 4
+    stability_top_pool: int = 6
 
     def prepare(self, df: pd.DataFrame) -> pd.DataFrame:
         out = add_core_indicators(df)
         return out.dropna(subset=['Open', 'High', 'Low', 'Close']).copy()
 
-    def extract_pivots(self, df: pd.DataFrame) -> List[Pivot]:
+    def extract_pivots(self, df: pd.DataFrame, min_reversal_pct: Optional[float] = None, atr_mult: Optional[float] = None) -> List[Pivot]:
         return adaptive_zigzag(
             df,
-            min_reversal_pct=self.min_reversal_pct,
-            atr_mult=self.atr_mult,
+            min_reversal_pct=self.min_reversal_pct if min_reversal_pct is None else min_reversal_pct,
+            atr_mult=self.atr_mult if atr_mult is None else atr_mult,
             max_pivots=self.max_pivots,
         )
 
@@ -63,11 +73,20 @@ class ElliottWaveEngine:
 
     def _finalize_candidate(self, candidate: WaveCandidate, df: pd.DataFrame) -> WaveCandidate:
         recency_score, bars_since = self._recency_score(df, candidate.pivot_indices[-1])
+        hard_rule_score = float(candidate.meta.get('hard_rule_score', 0.0) or 0.0)
+        fib_confluence_score = float(candidate.meta.get('fib_confluence_score', 0.0) or 0.0)
+        structure_quality = candidate.meta.get('structure_quality')
+        if structure_quality is None:
+            structure_quality = float(0.55 * hard_rule_score + 0.45 * fib_confluence_score)
+        structure_quality = float(np.clip(structure_quality, 0.0, 1.0))
         candidate.meta['base_score'] = float(candidate.score)
         candidate.meta['recency_score'] = recency_score
         candidate.meta['bars_since_last_pivot'] = float(bars_since)
-        candidate.score = float(0.8 * candidate.score + 0.2 * recency_score)
-        candidate.confidence = float(np.clip(0.7 * candidate.confidence + 0.3 * recency_score, 0.0, 1.0))
+        candidate.meta['hard_rule_score'] = hard_rule_score
+        candidate.meta['fib_confluence_score'] = fib_confluence_score
+        candidate.meta['structure_quality'] = structure_quality
+        candidate.score = float(0.72 * candidate.score + 0.18 * structure_quality + 0.10 * recency_score)
+        candidate.confidence = float(np.clip(0.62 * candidate.confidence + 0.23 * structure_quality + 0.15 * recency_score, 0.0, 1.0))
         price_targets = sorted(candidate.fib_price_targets, key=lambda x: (-x.weight, abs(x.value - df['Close'].iloc[-1])))
         if price_targets:
             core = price_targets[: min(3, len(price_targets))]
@@ -82,6 +101,20 @@ class ElliottWaveEngine:
         return candidate
 
     def _enumerate_candidates(self, df: pd.DataFrame, pivots: List[Pivot]) -> List[WaveCandidate]:
+        candidates = self._enumerate_candidates_raw(df, pivots)
+        if not candidates:
+            return []
+        candidates = sorted(candidates, key=lambda x: x.score, reverse=True)
+        if self.enable_stability_filter:
+            candidates = self._apply_stability_filter(df, candidates)
+        dedup = {}
+        for c in candidates:
+            key = (c.pattern_type, c.direction, tuple(c.pivot_indices))
+            if key not in dedup or c.score > dedup[key].score:
+                dedup[key] = c
+        return list(dedup.values())
+
+    def _enumerate_candidates_raw(self, df: pd.DataFrame, pivots: List[Pivot]) -> List[WaveCandidate]:
         out: List[WaveCandidate] = []
         n = len(pivots)
         if n < 4:
@@ -101,6 +134,14 @@ class ElliottWaveEngine:
                     diag = self._try_ending_diagonal(df, window, checks, soft)
                     if diag is not None:
                         out.append(self._finalize_candidate(diag, df))
+                if self.allow_double_zigzag:
+                    try:
+                        hard_pass_dz, checks_dz, soft_dz = evaluate_double_zigzag_window(window)
+                    except Exception:
+                        hard_pass_dz, checks_dz, soft_dz = False, [], {}
+                    dz = self._build_double_zigzag_candidate(df, window, hard_pass_dz, checks_dz, soft_dz)
+                    if dz is not None:
+                        out.append(self._finalize_candidate(dz, df))
 
         for i in range(start, n - 3):
             window = pivots[i : i + 4]
@@ -130,13 +171,84 @@ class ElliottWaveEngine:
                 candidate = self._build_triangle_candidate(df, window, hard_pass, checks, soft)
                 if candidate is not None:
                     out.append(self._finalize_candidate(candidate, df))
+        return out
 
-        dedup = {}
-        for c in out:
-            key = (c.pattern_type, c.direction, tuple(c.pivot_indices))
-            if key not in dedup or c.score > dedup[key].score:
-                dedup[key] = c
-        return list(dedup.values())
+    def _stability_variants(self) -> List[tuple[float, float]]:
+        if self.stability_trials <= 0:
+            return []
+        variants = [
+            (0.90, 1.00),
+            (1.10, 1.00),
+            (1.00, 0.90),
+            (1.00, 1.10),
+            (0.95, 0.95),
+            (1.05, 1.05),
+        ]
+        return variants[: self.stability_trials]
+
+    def _candidate_match_score(self, ref: WaveCandidate, other: WaveCandidate) -> float:
+        if ref.pattern_type != other.pattern_type or ref.direction != other.direction:
+            return 0.0
+        ref_idx = np.asarray(ref.pivot_indices, dtype=float)
+        other_idx = np.asarray(other.pivot_indices, dtype=float)
+        m = min(len(ref_idx), len(other_idx))
+        if m < 3:
+            return 0.0
+        ref_idx = ref_idx[-m:]
+        other_idx = other_idx[-m:]
+        scale = max(5.0, float(max(ref_idx[-1], other_idx[-1]) - min(ref_idx[0], other_idx[0])))
+        terminal = max(0.0, 1.0 - abs(ref_idx[-1] - other_idx[-1]) / max(3.0, 0.12 * scale))
+        path = max(0.0, 1.0 - float(np.mean(np.abs(ref_idx - other_idx))) / max(4.0, 0.18 * scale))
+        inv_ref = ref.invalidation
+        inv_other = other.invalidation
+        inv_score = 0.5
+        if inv_ref is not None and inv_other is not None:
+            base = max(abs(inv_ref), abs(inv_other), 1e-9)
+            inv_score = max(0.0, 1.0 - abs(inv_ref - inv_other) / (0.10 * base))
+        subtype_ref = str(ref.meta.get('subtype', ''))
+        subtype_other = str(other.meta.get('subtype', ''))
+        subtype_score = 1.0 if subtype_ref and subtype_ref == subtype_other else 0.5
+        return float(0.45 * terminal + 0.35 * path + 0.15 * inv_score + 0.05 * subtype_score)
+
+    def _apply_stability_filter(self, df: pd.DataFrame, candidates: List[WaveCandidate]) -> List[WaveCandidate]:
+        if not candidates:
+            return candidates
+        pool_n = min(self.stability_top_pool, len(candidates))
+        pool = candidates[:pool_n]
+        variants = self._stability_variants()
+        if not variants:
+            return candidates
+        for cand in pool:
+            matches = []
+            survival = 0
+            for rev_mult, atr_mult_scale in variants:
+                try:
+                    pivots = self.extract_pivots(
+                        df,
+                        min_reversal_pct=max(0.0025, self.min_reversal_pct * rev_mult),
+                        atr_mult=max(0.25, self.atr_mult * atr_mult_scale),
+                    )
+                    alt_candidates = self._enumerate_candidates_raw(df, pivots)
+                except Exception:
+                    alt_candidates = []
+                if not alt_candidates:
+                    matches.append(0.0)
+                    continue
+                best_match = max((self._candidate_match_score(cand, x) for x in alt_candidates), default=0.0)
+                if best_match >= 0.45:
+                    survival += 1
+                matches.append(best_match)
+            stability = float(np.mean(matches)) if matches else 0.0
+            survival_ratio = float(survival / len(variants)) if variants else 0.0
+            cand.meta['stability_score'] = stability
+            cand.meta['stability_survival_ratio'] = survival_ratio
+            cand.score = float(0.78 * cand.score + 0.16 * stability + 0.06 * survival_ratio)
+            cand.confidence = float(np.clip(0.76 * cand.confidence + 0.16 * stability + 0.08 * survival_ratio, 0.0, 1.0))
+            if stability >= 0.72 and survival_ratio >= 0.75:
+                cand.momentum_notes.append('Count stability is high across small pivot-parameter perturbations.')
+            elif stability <= 0.45:
+                cand.momentum_notes.append('Count is fragile: small pivot-parameter changes produce materially different structures.')
+        return sorted(candidates, key=lambda x: x.score, reverse=True)
 
     def _momentum_notes(self, df: pd.DataFrame, pivots: List[Pivot], direction: str) -> List[str]:
         notes: List[str] = []
@@ -162,6 +274,8 @@ class ElliottWaveEngine:
         hard_score = sum(c.weight for c in checks if c.passed) / max(sum(c.weight for c in checks), 1e-9)
         fib_score = np.mean([soft['fib_score_w2'], soft['fib_score_w3'], soft['fib_score_w4'], soft['fib_score_w5']])
         score = 0.6 * hard_score + 0.4 * fib_score
+        if soft.get('truncation_flag', 0.0) > 0:
+            score *= 0.93
         if score < 0.35:
             return None
         prices = [p.price for p in pivots]
@@ -203,12 +317,17 @@ class ElliottWaveEngine:
         )
         invalidation = prices[4]
         confidence = float(np.clip(score, 0, 1))
+        meta = dict(soft)
+        meta['hard_rule_score'] = float(hard_score)
+        meta['fib_confluence_score'] = float(fib_score)
+        meta['structure_quality'] = float(0.55 * hard_score + 0.45 * fib_score)
+        meta['subtype'] = 'truncated_impulse' if soft.get('truncation_flag', 0.0) > 0 else 'standard_impulse'
         return WaveCandidate(
             pattern_type='impulse', direction=direction, pivot_indices=idxs, pivot_prices=prices, pivot_timestamps=tss,
             score=float(score), confidence=confidence, hard_rule_pass=hard_pass, rule_checks=checks,
             fib_price_targets=price_targets, fib_time_targets=time_targets,
             wave_duration_projections=impulse_wave_duration_projections(pivots, index=df.index),
-            momentum_notes=self._momentum_notes(df, pivots, direction), invalidation=invalidation, meta=soft,
+            momentum_notes=self._momentum_notes(df, pivots, direction), invalidation=invalidation, meta=meta,
         )
 
     def _try_ending_diagonal(self, df: pd.DataFrame, pivots: List[Pivot], checks: List[RuleCheck], soft: dict) -> Optional[WaveCandidate]:
@@ -222,13 +341,18 @@ class ElliottWaveEngine:
         if not (1.1 <= ext3 <= 2.0 and 1.1 <= ext5 <= 2.0):
             return None
         score = 0.45 + 0.25 * soft.get('fib_score_w3', 0.0) + 0.30 * soft.get('fib_score_w5', 0.0)
+        meta = dict(soft)
+        meta['hard_rule_score'] = 0.85
+        meta['fib_confluence_score'] = float(0.5 * soft.get('fib_score_w3', 0.0) + 0.5 * soft.get('fib_score_w5', 0.0))
+        meta['structure_quality'] = float(score)
+        meta['subtype'] = 'ending_diagonal'
         return WaveCandidate(
             pattern_type='ending_diagonal', direction=direction, pivot_indices=[p.idx for p in pivots], pivot_prices=prices,
             pivot_timestamps=[p.ts for p in pivots], score=float(score), confidence=float(np.clip(score, 0, 1)),
             hard_rule_pass=True, rule_checks=checks + [RuleCheck('ending diagonal overlap present', True, 'wave 4 overlaps wave 1 range', 1.0)],
             fib_price_targets=[], fib_time_targets=[], wave_duration_projections=impulse_wave_duration_projections(pivots, index=df.index),
             momentum_notes=['Ending diagonal proxy: overlap is present and both waves 3 and 5 extend in a diagonal-like range.'],
-            invalidation=prices[4], meta=soft,
+            invalidation=prices[4], meta=meta,
         )
 
     def _build_zigzag_candidate(self, df: pd.DataFrame, pivots: List[Pivot], hard_pass: bool, checks: List[RuleCheck], soft: dict) -> Optional[WaveCandidate]:
@@ -254,11 +378,67 @@ class ElliottWaveEngine:
             [time_projection(idxs[2], max(1, dur_a), 0.618), time_projection(idxs[2], max(1, dur_a), 1.0), time_projection(idxs[2], max(1, dur_a), 1.618)],
             [0.7, 0.9, 1.0], index=df.index,
         )
+        meta = dict(soft)
+        meta['hard_rule_score'] = float(hard_score)
+        meta['fib_confluence_score'] = float(fib_score)
+        meta['structure_quality'] = float(0.55 * hard_score + 0.45 * fib_score)
+        meta['subtype'] = 'sharp_zigzag' if soft.get('zigzag_variant_sharp', 0.0) >= soft.get('zigzag_variant_deep', 0.0) else 'deep_zigzag'
         return WaveCandidate(
             pattern_type='zigzag', direction=direction, pivot_indices=idxs, pivot_prices=prices, pivot_timestamps=tss,
             score=float(score), confidence=float(np.clip(score, 0, 1)), hard_rule_pass=hard_pass, rule_checks=checks,
             fib_price_targets=price_targets, fib_time_targets=time_targets, wave_duration_projections=zigzag_wave_duration_projections(pivots, index=df.index),
-            momentum_notes=[], invalidation=prices[2], meta=soft,
+            momentum_notes=[], invalidation=prices[2], meta=meta,
+        )
+
+    def _build_double_zigzag_candidate(self, df: pd.DataFrame, pivots: List[Pivot], hard_pass: bool, checks: List[RuleCheck], soft: dict) -> Optional[WaveCandidate]:
+        if not soft:
+            return None
+        hard_score = sum(c.weight for c in checks if c.passed) / max(sum(c.weight for c in checks), 1e-9)
+        fib_score = np.mean([soft['fib_score_x1'], soft['fib_score_y'], soft['fib_score_x2'], soft['fib_score_z']])
+        score = 0.58 * hard_score + 0.42 * fib_score
+        if score < 0.37:
+            return None
+        direction = 'bull' if pivots[-1].price > pivots[0].price else 'bear'
+        prices = [p.price for p in pivots]
+        idxs = [p.idx for p in pivots]
+        tss = [p.ts for p in pivots]
+        first = abs(prices[1] - prices[0])
+        second = abs(prices[3] - prices[2])
+        sign = 1 if direction == 'bull' else -1
+        anchor = prices[4]
+        z_targets = build_price_targets(
+            ['Z ext 61.8% of W', 'Z ext 100% of W', 'Z ext 127.2% of W', 'Z ext 161.8% of W'],
+            [
+                price_projection(anchor, first if first else second, 0.618, sign),
+                price_projection(anchor, first if first else second, 1.0, sign),
+                price_projection(anchor, first if first else second, 1.272, sign),
+                price_projection(anchor, first if first else second, 1.618, sign),
+            ],
+            [0.6, 0.9, 1.0, 0.8],
+        )
+        dur_w = idxs[1] - idxs[0]
+        time_targets = build_time_targets(
+            ['Z time 61.8% of W', 'Z time 100% of W', 'Z time 161.8% of W'],
+            idxs[4],
+            [
+                time_projection(idxs[4], max(1, dur_w), 0.618),
+                time_projection(idxs[4], max(1, dur_w), 1.0),
+                time_projection(idxs[4], max(1, dur_w), 1.618),
+            ],
+            [0.7, 1.0, 0.8],
+            index=df.index,
+        )
+        meta = dict(soft)
+        meta['hard_rule_score'] = float(hard_score)
+        meta['fib_confluence_score'] = float(fib_score)
+        meta['structure_quality'] = float(0.58 * hard_score + 0.42 * fib_score)
+        meta['subtype'] = 'double_zigzag'
+        return WaveCandidate(
+            pattern_type='double_zigzag', direction=direction, pivot_indices=idxs, pivot_prices=prices, pivot_timestamps=tss,
+            score=float(score), confidence=float(np.clip(score, 0, 1)), hard_rule_pass=hard_pass, rule_checks=checks,
+            fib_price_targets=z_targets, fib_time_targets=time_targets,
+            wave_duration_projections=double_zigzag_duration_projections(pivots, index=df.index),
+            momentum_notes=['Complex correction proxy: W-X-Y / double-zigzag style structure detected.'], invalidation=prices[4], meta=meta,
         )
 
     def _build_flat_candidate(self, df: pd.DataFrame, pivots: List[Pivot], hard_pass: bool, checks: List[RuleCheck], soft: dict) -> Optional[WaveCandidate]:
@@ -267,7 +447,12 @@ class ElliottWaveEngine:
         direction = 'bull' if pivots[-1].price > pivots[0].price else 'bear'
         hard_score = sum(c.weight for c in checks if c.passed) / max(sum(c.weight for c in checks), 1e-9)
         fib_score = np.mean([soft['fib_score_b'], soft['fib_score_c']])
-        score = 0.6 * hard_score + 0.4 * fib_score
+        variant_boost = max(
+            float(soft.get('flat_variant_regular_score', 0.0)),
+            float(soft.get('flat_variant_expanded_score', 0.0)),
+            float(soft.get('flat_variant_running_score', 0.0)),
+        )
+        score = 0.52 * hard_score + 0.34 * fib_score + 0.14 * variant_boost
         if score < 0.34:
             return None
         prices = [p.price for p in pivots]
@@ -293,11 +478,17 @@ class ElliottWaveEngine:
             [time_projection(idxs[2], max(1, dur_a), 0.618), time_projection(idxs[2], max(1, dur_a), 1.0), time_projection(idxs[2], max(1, dur_b), 1.618)],
             [0.6, 1.0, 0.8], index=df.index,
         )
+        variant = soft.get('flat_variant', 'flat')
+        meta = dict(soft)
+        meta['hard_rule_score'] = float(hard_score)
+        meta['fib_confluence_score'] = float(fib_score)
+        meta['structure_quality'] = float(0.52 * hard_score + 0.34 * fib_score + 0.14 * variant_boost)
+        meta['subtype'] = variant
         return WaveCandidate(
             pattern_type='flat', direction=direction, pivot_indices=idxs, pivot_prices=prices, pivot_timestamps=tss,
             score=float(score), confidence=float(np.clip(score, 0, 1)), hard_rule_pass=hard_pass, rule_checks=checks,
             fib_price_targets=price_targets, fib_time_targets=time_targets, wave_duration_projections=zigzag_wave_duration_projections(pivots, index=df.index),
-            momentum_notes=['Flat correction candidate: B is unusually deep relative to A.'], invalidation=prices[2], meta=soft,
+            momentum_notes=[f'Flat correction candidate: best subtype proxy is {variant.replace("_", " ")}.'], invalidation=prices[2], meta=meta,
         )
 
     def _build_triangle_candidate(self, df: pd.DataFrame, pivots: List[Pivot], hard_pass: bool, checks: List[RuleCheck], soft: dict) -> Optional[WaveCandidate]:
@@ -305,9 +496,14 @@ class ElliottWaveEngine:
         if score < 0.45:
             return None
         direction = 'bull' if pivots[-1].price > pivots[0].price else 'bear'
+        meta = dict(soft)
+        meta['hard_rule_score'] = float(1.0 if hard_pass else 0.0)
+        meta['fib_confluence_score'] = float(soft.get('fib_score', 0.0))
+        meta['structure_quality'] = float(0.7 * (1.0 if hard_pass else 0.0) + 0.3 * soft.get('fib_score', 0.0))
+        meta['subtype'] = 'contracting_triangle'
         return WaveCandidate(
             pattern_type='triangle', direction=direction, pivot_indices=[p.idx for p in pivots], pivot_prices=[p.price for p in pivots],
             pivot_timestamps=[p.ts for p in pivots], score=float(score), confidence=float(np.clip(score, 0, 1)), hard_rule_pass=hard_pass,
-            rule_checks=checks, fib_price_targets=[], fib_time_targets=[], wave_duration_projections=triangle_wave_duration_projections(pivots, index=df.index),
-            momentum_notes=['Triangle proxy detected from contracting highs and rising lows.'], invalidation=None, meta=soft,
+            rule_checks=checks, fib_price_targets=[], fib_time_targets=[], wave_duration_projections=double_zigzag_duration_projections(pivots, index=df.index),
+            momentum_notes=['Triangle proxy detected from contracting highs and rising lows.'], invalidation=None, meta=meta,
         )

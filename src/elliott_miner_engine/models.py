@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Literal, Optional
 
 PatternDirection = Literal["bull", "bear"]
-PatternType = Literal["impulse", "zigzag", "flat", "triangle", "ending_diagonal"]
+PatternType = Literal["impulse", "zigzag", "flat", "triangle", "ending_diagonal", "double_zigzag"]
 
 
 @dataclass(slots=True)
